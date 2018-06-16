@@ -26,6 +26,14 @@ debug:
 
 all: libsmear.a
 
+obj/%.d: %.c # This is lifted from the GNU Make tutorial, with slight modification.
+	@set -e; rm -f $@; \
+	  $(CC) -MM -MG $(CFLAGS) $< > $@.$$$$; \
+	  sed 's,\($*\)\.o[ :]*,obj/\1.o $@ : ,g' < $@.$$$$ > $@; \
+	  rm -f $@.$$$$
+
+-include $(OBJ:.o=.d)
+
 libsmear.a: $(OBJ)
 	ar -cvq $@ $(OBJ)
 
