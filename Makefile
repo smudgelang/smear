@@ -13,9 +13,9 @@ OBJ := $(SRC:%.c=$(OBJDIR)/%.o)
 
 LIBS := $(sort $(LIBS))
 
-default: all
+.PHONY: clean default all
 
-.PHONY: clean
+default: all
 
 debug:
 	@echo src $(SRC)
@@ -26,16 +26,18 @@ debug:
 
 all: libsmear.a
 
-obj/%.d: %.c # This is lifted from the GNU Make tutorial, with slight modification.
+-include $(OBJ:.o=.d)
+
+obj/%.d: %.c # Slightly modified from GNU Make tutorial
 	@set -e; rm -f $@; \
 	  $(CC) -MM -MG $(CFLAGS) $< > $@.$$$$; \
 	  sed 's,\($*\)\.o[ :]*,obj/\1.o $@ : ,g' < $@.$$$$ > $@; \
 	  rm -f $@.$$$$
 
--include $(OBJ:.o=.d)
-
 libsmear.a: $(OBJ)
 	ar -cvq $@ $(OBJ)
+
+
 
 obj/%.o: %.c
 	$(CC) $(CFLAGS) $(INCLUDE) $(LIBS) -c -o $@ $<
