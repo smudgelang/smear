@@ -1,17 +1,36 @@
-CC=gcc
-CFLAGS=-g -std=c89 -Wall -Werror -Wextra -Wno-unused-parameter -Wno-unused-function -pthread
+OBJDIR := obj
+SRCDIR := src
+MODULES := smear queue
+LIBS :=
+SRC := 
+CC := gcc
+CFLAGS := -g -std=c99 -Wall -Werror -Wextra -Wno-unused-parameter -Wno-unused-function
+INCLUDE := $(foreach mod, $(MODULES), -Isrc/$(mod))
+VPATH := $(foreach mod, $(MODULES), src/$(mod))
 
-default: lights
+include $(patsubst %,$(SRCDIR)/%/module.mk, $(MODULES))
+OBJ := $(SRC:%.c=$(OBJDIR)/%.o)
+
+LIBS := $(sort $(LIBS))
+
+default: all
 
 .PHONY: clean
 
+debug:
+	@echo src $(SRC)
+	@echo libs $(LIBS)
+	@echo obj $(OBJ)
+	@echo arch $(ARCH)
+	@echo vpath $(VPATH)
+
 all: libsmear.a
 
-lib%.a: queue.o smear.o
-	ar -cvq $@ $^
+libsmear.a: $(OBJ)
+	ar -cvq $@ $(OBJ)
 
-%.o: %.c
-	$(CC) $(CFLAGS) -c -o $@ $<
+obj/%.o: %.c
+	$(CC) $(CFLAGS) $(INCLUDE) $(LIBS) -c -o $@ $<
 
 clean:
-	rm -f *.o *.a
+	rm -f obj/* *.a
