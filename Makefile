@@ -4,8 +4,8 @@ MODULES := smear queue
 LIBS :=
 SRC := 
 CC := gcc
-CFLAGS := -g -std=c99 -Wall -Werror -Wextra -Wno-unused-parameter -Wno-unused-function
-INCLUDE := $(foreach mod, $(MODULES), -Isrc/$(mod))
+CFLAGS := -ggdb3 -std=c99 -Wall -Werror -Wextra -Wno-unused-parameter -Wno-unused-function
+INCLUDE := -Iinclude $(foreach mod, $(MODULES), -Isrc/$(mod))
 VPATH := $(foreach mod, $(MODULES), src/$(mod))
 
 include $(patsubst %,$(SRCDIR)/%/module.mk, $(MODULES))
@@ -13,7 +13,9 @@ OBJ := $(SRC:%.c=$(OBJDIR)/%.o)
 
 LIBS := $(sort $(LIBS))
 
-.PHONY: clean default all
+include tests/tests.mk
+
+.PHONY: clean default all tests
 
 default: all
 
@@ -24,7 +26,7 @@ debug:
 	@echo arch $(ARCH)
 	@echo vpath $(VPATH)
 
-all: libsmear.a
+all: libsmear.a tests
 
 -include $(OBJ:.o=.d)
 
@@ -37,10 +39,8 @@ obj/%.d: %.c # Slightly modified from GNU Make tutorial
 libsmear.a: $(OBJ)
 	ar -cvq $@ $(OBJ)
 
-
-
 obj/%.o: %.c
 	$(CC) $(CFLAGS) $(INCLUDE) $(LIBS) -c -o $@ $<
 
 clean:
-	rm -f obj/* *.a
+	rm -f obj/* *.a test-*
