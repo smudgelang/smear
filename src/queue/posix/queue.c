@@ -135,14 +135,22 @@ done:
 bool dequeue(queue_t *q, const void **value)
 {
     size_t index;
+    bool success;
 
+    success = false;
+    if (pthread_mutex_lock(&q->mutex) != 0)
+        goto done;
     settle(q, false);
     if (q->write == q->read)
-        return false;
+        goto fail;
     index = real_index(q->read, q->capacity);
     *value = q->ring[index];
     q->read++;
-    return true;
+    success = true;
+fail:
+    pthread_mutex_unlock(&q->mutex);
+done:
+    return success;
 }
 
 size_t size(const queue_t *q)
