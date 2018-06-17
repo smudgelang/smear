@@ -3,7 +3,7 @@ programming language.
 
 To use this package in your own Smudge projects, build "libsmear.a"
 and put it in your library include path. Then link your code with
-"-pthread -lsmear". Also put "smear.h" somewhere in your include path.
+"-lsmear -pthread". Also put "smear.h" somewhere in your include path.
 
 Smear implements all the functions whose names start with "SMUDGE_",
 and has handy macros for generating your event handlers. Put this in
