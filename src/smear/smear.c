@@ -35,7 +35,7 @@ static void flushEventQueue(void)
 
     while(size(q) > 0)
     {
-        success = dequeue(q, (void **)&qmsg);
+        success = dequeue(q, (const void **)&qmsg);
         if (!success)
         {
             ERROR_MSG("Failed to dequeue element.");

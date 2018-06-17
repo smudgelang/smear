@@ -1,162 +1,191 @@
-/* Copyright 2017 Bose Corporation.
- * This software is released under the 3-Clause BSD License.
- * The license can be viewed at https://github.com/Bose/Smudge/blob/master/LICENSE
- */
-
-#include <stdbool.h>
-#include <string.h>
+#define _GNU_SOURCE // for reallocarray
 #include <stdlib.h>
-#include <pthread.h>
+#include <stdio.h>
 #include <assert.h>
+#include <string.h>
+#include <pthread.h>
 #include "queue.h"
+
+#define INITIAL_SIZE 4 // Must be a power of 2
 
 struct queue_s
 {
-    queue_t *next;
-    void *val;
-    bool empty;
+    size_t write;
+    size_t read;
+    size_t capacity; // Must always be a power of 2
     pthread_mutex_t mutex;
+    const void **ring;
 };
 
-static queue_t *tail(queue_t *head)
+static size_t real_index(size_t large, size_t capacity)
 {
-    queue_t *cursor;
-    for (cursor = head; cursor->next != NULL; cursor = cursor->next)
-        ;
-    return cursor;
+    size_t mask;
+
+    // Because capacity is always a power of 2:
+    assert((capacity & (capacity - 1)) == 0);
+    // n % capacity == n & (capacity - 1)
+    mask = capacity - 1;
+    return large & mask;
 }
 
-#if 0 /* Useful for stuf we don't do right now. */
-static bool in(queue_t *head, void *val)
+static void grow_q(queue_t *q)
 {
-    queue_t *cursor;
+    void *bigger;
+    size_t real_r, real_w;
 
-    if (head->empty)
-        return false;
-    for (cursor = head; cursor != NULL; cursor = cursor->next)
+    bigger = reallocarray(q->ring, q->capacity * 2, sizeof(*q->ring));
+    if (bigger == NULL)
     {
-        if (cursor->val == val)
-            return true;
+        // It's fine, maybe we're out of memory. The enqueue
+        // operation will fail, but we don't need to crash here.
+        return;
     }
-    return false;
+
+    real_r = real_index(q->read, q->capacity);
+    real_w = real_index(q->write, q->capacity);
+    if (real_w <= real_r)
+    {
+        size_t bytes;
+
+        // Move indices [0, real_w) up to capacity.
+        bytes = real_w * sizeof(q->ring[0]);
+        memmove(&q->ring[q->capacity], q->ring, bytes);
+    }
+
+    while (q->read > q->capacity)
+    {
+        q->read -= q->capacity;
+        q->write -= q->capacity;
+    }
+    if (q->write == q->read)
+    {
+        q->write = q->capacity;
+    }
+    q->capacity *= 2;
+    q->ring = bigger;
+    return;
 }
-#endif
 
-static queue_t *new_node(void)
+static void settle(queue_t *q, bool inserting)
 {
-    queue_t *node;
+    if (q->read == q->write)
+    {
+        q->read = 0;
+        q->write = 0;
+        return;
+    }
 
-    node = malloc(sizeof(queue_t));
-    if (node == NULL)
-        return NULL;
-    memset(node, 0, sizeof(*node));
-    node->empty = true;
-    return node;
+    if (q->read > q->capacity)
+    {
+        q->read = real_index(q->read, q->capacity);
+        q->write = real_index(q->write, q->capacity);
+    }
+
+    // Resize queue when necessary/appropriate.
+    if (size(q) == q->capacity && inserting)
+    {
+        grow_q(q);
+    }
 }
 
 queue_t *newq(void)
 {
-    queue_t *node;
+    queue_t *q;
 
-    node = new_node();
-    pthread_mutex_init(&node->mutex, NULL);
-    return node;
+    q = malloc(sizeof(*q));
+    q->read = 0;
+    q->write = 0;
+    q->capacity = INITIAL_SIZE;
+    pthread_mutex_init(&q->mutex, NULL);
+    q->ring = calloc(q->capacity, sizeof(*q->ring));
+    return q;
 }
 
-void freeq(queue_t *head)
+void freeq(queue_t *queue)
 {
-    queue_t *freeNext, *freeMe;
-
-    assert(pthread_mutex_lock(&head->mutex) == 0);
-    pthread_mutex_unlock(&head->mutex);
-    pthread_mutex_destroy(&head->mutex);
-    freeMe = head;
-    while (freeMe != NULL)
-    {
-        freeNext = head->next;
-        free(freeMe);
-        freeMe = freeNext;
-    }
-    
-    return;
+    assert(pthread_mutex_lock(&queue->mutex) == 0);
+    pthread_mutex_unlock(&queue->mutex);
+    pthread_mutex_destroy(&queue->mutex);
+    free(queue->ring);
+    free(queue);
+    queue = NULL;
 }
 
-bool enqueue(queue_t *head, void *value)
+bool enqueue(queue_t *q, const void *value)
 {
-    queue_t *next;
-    queue_t *parent;
+    size_t index;
     bool success;
 
     success = false;
-    if (pthread_mutex_lock(&head->mutex) != 0)
+    if (pthread_mutex_lock(&q->mutex) != 0)
         goto done;
-    next = NULL;
-    parent = tail(head);
-    if (parent->empty == false)
-    {
-        next = new_node();
-        if (next == NULL)
-            goto error;
-        parent->next = next;
-    }
-    else
-    {
-        next = parent;
-    }
-    next->empty = false;
-    next->val = value;
+    settle(q, true);
+    if (size(q) == q->capacity)
+        goto fail;
+    index = real_index(q->write, q->capacity);
+    q->ring[index] = value;
+    q->write++;
     success = true;
-error:
-    pthread_mutex_unlock(&head->mutex);
+fail:
+    pthread_mutex_unlock(&q->mutex);
 done:
     return success;
 }
 
-bool dequeue(queue_t *head, void **value)
+bool dequeue(queue_t *q, const void **value)
 {
-    queue_t *oldNext;
-    bool success;
+    size_t index;
 
-    success = false;
-    if (pthread_mutex_lock(&head->mutex) != 0)
-        goto error_unlocked;
-    if (head->empty)
-        goto error;
-    *value = head->val;
-    if (head->next == NULL)
-    {
-        head->empty = true;
-    }
-    else
-    {
-        oldNext = head->next;
-        memcpy(head, oldNext, sizeof(queue_t));
-        free(oldNext);
-    }
-    success = true;
-error:
-    pthread_mutex_unlock(&head->mutex);
-error_unlocked:
-    return success;
+    settle(q, false);
+    if (q->write == q->read)
+        return false;
+    index = real_index(q->read, q->capacity);
+    *value = q->ring[index];
+    q->read++;
+    return true;
 }
 
-size_t size(const queue_t *head)
+size_t size(const queue_t *q)
 {
-    size_t count;
-    const queue_t *cursor;
-
-    count = 0;
-    if (pthread_mutex_lock((pthread_mutex_t *)&head->mutex) != 0)
-    {
-        assert(false);
-        goto error_unlocked;
-    }
-    for (cursor = head; cursor != NULL; cursor = cursor->next)
-    {
-        if (!cursor->empty)
-            count++;
-    }
-    pthread_mutex_unlock((pthread_mutex_t *)&head->mutex);
-error_unlocked:
-    return count;
+    return q->write - q->read;
 }
+
+#if 0
+int main(void)
+{
+    queue_t *q;
+    const void *val;
+
+    q = newq();
+    assert(enqueue(q, (const void *)0x1111111100000000)); // 1
+    assert(enqueue(q, (const void *)0x2222222211111111)); // 2
+    assert(dequeue(q, &val));                             // 1
+    assert(val == (void *)0x1111111100000000);
+    assert(enqueue(q, (const void *)0x3333333322222222)); // 2
+    assert(dequeue(q, &val));                             // 1
+    assert(val == (void *)0x2222222211111111);
+    assert(enqueue(q, (const void *)0x4444444433333333)); // 2
+    assert(enqueue(q, (const void *)0x5555555544444444)); // 3
+    assert(enqueue(q, (const void *)0x6666666655555555)); // 4
+    assert(enqueue(q, (const void *)0x7777777766666666)); // 5
+    assert(enqueue(q, (const void *)0x8888888877777777)); // 6
+    assert(enqueue(q, (const void *)0x9999999988888888)); // 7
+    assert(dequeue(q, &val)); // 6
+    assert(val == (void *)0x3333333322222222);
+    assert(dequeue(q, &val)); // 5
+    assert(val == (void *)0x4444444433333333);
+    assert(dequeue(q, &val)); // 4
+    assert(val == (void *)0x5555555544444444);
+    assert(dequeue(q, &val)); // 3
+    assert(val == (void *)0x6666666655555555);
+    assert(dequeue(q, &val)); // 2
+    assert(val == (void *)0x7777777766666666);
+    assert(dequeue(q, &val)); // 1
+    assert(val == (void *)0x8888888877777777);
+    assert(dequeue(q, &val)); // 0
+    assert(val == (void *)0x9999999988888888);
+
+    return q->capacity;
+}
+#endif
+
