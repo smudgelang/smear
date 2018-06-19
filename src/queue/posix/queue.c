@@ -14,8 +14,14 @@ struct queue_s
     size_t read;
     size_t capacity; // Must always be a power of 2
     pthread_mutex_t mutex;
+    pthread_cond_t empty;
     const void **ring;
 };
+
+static size_t size_LH(const queue_t *q)
+{
+    return q->write - q->read;
+}
 
 static size_t real_index(size_t large, size_t capacity)
 {
@@ -82,7 +88,7 @@ static void settle(queue_t *q, bool inserting)
     }
 
     // Resize queue when necessary/appropriate.
-    if (size(q) == q->capacity && inserting)
+    if (size_LH(q) == q->capacity && inserting)
     {
         grow_q(q);
     }
@@ -98,6 +104,7 @@ queue_t *newq(void)
     q->capacity = INITIAL_SIZE;
     pthread_mutex_init(&q->mutex, NULL);
     q->ring = calloc(q->capacity, sizeof(*q->ring));
+    pthread_cond_init(&q->empty, NULL);
     return q;
 }
 
@@ -119,8 +126,9 @@ bool enqueue(queue_t *q, const void *value)
     success = false;
     if (pthread_mutex_lock(&q->mutex) != 0)
         goto done;
+
     settle(q, true);
-    if (size(q) == q->capacity)
+    if (size_LH(q) == q->capacity)
         goto fail;
     index = real_index(q->write, q->capacity);
     q->ring[index] = value;
@@ -146,6 +154,8 @@ bool dequeue(queue_t *q, const void **value)
     index = real_index(q->read, q->capacity);
     *value = q->ring[index];
     q->read++;
+    if (size_LH(q) == 0)
+        pthread_cond_broadcast(&q->empty);
     success = true;
 fail:
     pthread_mutex_unlock(&q->mutex);
@@ -153,9 +163,29 @@ done:
     return success;
 }
 
-size_t size(const queue_t *q)
+size_t size(queue_t *q)
 {
-    return q->write - q->read;
+	size_t s;
+
+	if (pthread_mutex_lock(&q->mutex) != 0)
+	{
+		perror("Failed to get queue mutex.");
+		exit(-1);
+	}
+	s = size_LH(q);
+	pthread_mutex_unlock(&q->mutex);
+	return s;
+}
+
+void wait_empty(queue_t *q)
+{
+    pthread_mutex_lock(&q->mutex);
+    while(size_LH(q) != 0)
+    {
+        pthread_cond_wait(&q->empty, &q->mutex);
+    }
+    pthread_mutex_unlock(&q->mutex);
+    return;
 }
 
 #if 0

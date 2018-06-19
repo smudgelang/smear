@@ -24,6 +24,9 @@ bool enqueue(queue_t *queue, const void *value);
 bool dequeue(queue_t *queue, const void **value);
 
 /* Return the length of the queue. */
-size_t size(const queue_t *queue);
+size_t size(queue_t *queue);
+
+/* Block until the queue is empty. */
+void wait_empty(queue_t *q);
 
 #endif

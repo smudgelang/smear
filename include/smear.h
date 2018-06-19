@@ -32,13 +32,12 @@ void SRT_init(void);
  * they're received. */
 void SRT_run(void);
 
-/* SRT_join joins the thread executing the state machines. It will not
- * return. */
-void SRT_join(void);
-
 /* SRT_stop ends execution of the runtime and frees associated
  * resources. */
 void SRT_stop(void);
+
+/* SRT_continue executes until there are no pending events. */
+void SRT_wait_for_idle(void);
 
 /* Don't call this directly. */
 void SRT_send_message(const void *msg, void (handler)(const void *));
