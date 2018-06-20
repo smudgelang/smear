@@ -18,7 +18,6 @@ typedef struct
 
 static queue_t *q;
 static pthread_t tid;
-static bool queue_empty;
 
 /* The plan:
  *
@@ -46,7 +45,6 @@ static void flushEventQueue(void)
         qmsg->handler(qmsg->wrapper);
         free(qmsg);
     }
-    queue_empty = true;
 }
 
 static void *mainloop(void *unused)
@@ -97,23 +95,6 @@ void SRT_send_message(const void *msg, void (handler)(const void *))
     }
     qmsg->wrapper = msg;
     qmsg->handler = handler;
-    // There's a race here: set to false, then the main loop flushes
-    // the queue and sets it to true. Then we enqueue something, and
-    // the queue is not empty but queue_empty is true. Then someone
-    // calls wait_for_idle, which exits immediately even though
-    // there's something in the queue. This can only happen if the
-    // event was sent by a thread other than the one calling
-    // wait_for_idle, which I'm ok with.
-
-    // Setting the flag after enqueue would lead to a different race,
-    // where the thread that sends the event could falsely never
-    // return from wait_for_idle, because the event was dequeued
-    // between the enqueue call and the flag getting set. That would
-    // be worse.
-
-    // Better would be always having the correct value in queue_empty,
-    // but that would require locking the queue.
-    queue_empty = false;
     if (!enqueue(q, qmsg))
     {
         ERROR_MSG("Failed to enqueue message.");
