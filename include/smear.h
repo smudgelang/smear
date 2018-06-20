@@ -36,7 +36,7 @@ void SRT_run(void);
  * resources. */
 void SRT_stop(void);
 
-/* SRT_continue executes until there are no pending events. */
+/* Block until there are no pending events, then return. */
 void SRT_wait_for_idle(void);
 
 /* Don't call this directly. */
