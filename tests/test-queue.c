@@ -1,7 +1,7 @@
 #include <stdbool.h>
 #include <stdint.h>
 #include <stdio.h>
-#include "queue.h"
+#include "../src/queue/queue.h"
 
 int main(void)
 {

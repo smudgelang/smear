@@ -6,6 +6,7 @@
 
 #include "queue.h"
 
+#define EXPORT_SYMBOL __attribute__((visibility ("default")))
 #define ERROR_MSG(msg) fprintf(stderr, "%s - %s\n", __FUNCTION__, msg)
 
 typedef void (*handler_t)(const void *);
@@ -57,28 +58,37 @@ static void *mainloop(void *unused)
     return NULL;
 }
 
-void SMUDGE_debug_print(const char *fmt, const char *a1, const char *a2)
+static void SRT_join(void)
+{
+    void *rv;
+    pthread_join(tid, &rv);
+}
+
+EXPORT_SYMBOL void SMUDGE_debug_print(const char *fmt, const char *a1,
+                                      const char *a2)
 {
     fprintf(stderr, fmt, a1, a2);
 }
 
-void SMUDGE_free(const void *a1)
+EXPORT_SYMBOL void SMUDGE_free(const void *a1)
 {
     free((void *)a1);
 }
 
-void SMUDGE_panic(void)
+EXPORT_SYMBOL void SMUDGE_panic(void)
 {
     exit(-1);
 }
 
-void SMUDGE_panic_print(const char *fmt, const char *a1, const char *a2)
+EXPORT_SYMBOL void SMUDGE_panic_print(const char *fmt, const char *a1,
+                                      const char *a2)
 {
     SMUDGE_debug_print(fmt, a1, a2);
     SMUDGE_panic();
 }
 
-void SRT_send_message(const void *msg, void (handler)(const void *))
+EXPORT_SYMBOL void SRT_send_message(const void *msg,
+                                    void (handler)(const void *))
 {
     mq_msg_t *qmsg;
 
@@ -102,12 +112,12 @@ void SRT_send_message(const void *msg, void (handler)(const void *))
     }
 }
 
-void SRT_init(void)
+EXPORT_SYMBOL void SRT_init(void)
 {
     q = newq();
 }
 
-void SRT_run(void)
+EXPORT_SYMBOL void SRT_run(void)
 {
     pthread_attr_t attr;
 
@@ -116,18 +126,12 @@ void SRT_run(void)
     pthread_attr_destroy(&attr);
 }
 
-static void SRT_join(void)
-{
-    void *rv;
-    pthread_join(tid, &rv);
-}
-
-void SRT_wait_for_idle(void)
+EXPORT_SYMBOL void SRT_wait_for_idle(void)
 {
     return wait_empty(q);
 }
 
-void SRT_stop(void)
+EXPORT_SYMBOL void SRT_stop(void)
 {
     void *rv;
     pthread_cancel(tid);

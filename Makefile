@@ -4,20 +4,20 @@ MODULES := smear queue
 LIBS :=
 SRC := 
 CC := gcc
-CFLAGS := -ggdb3 -std=c99 -Wall -Werror -Wextra -Wno-unused-parameter -Wno-unused-function
+CFLAGS := -ggdb3 -std=c99 -Wall -Werror -Wextra -Wno-unused-parameter -Wno-unused-function -fvisibility=hidden
 INCLUDE := -Iinclude $(foreach mod, $(MODULES), -Isrc/$(mod))
 VPATH := $(foreach mod, $(MODULES), src/$(mod))
 
+default: all
+
+include tests/tests.mk
 include $(patsubst %,$(SRCDIR)/%/module.mk, $(MODULES))
 OBJ := $(SRC:%.c=$(OBJDIR)/%.o)
 
 LIBS := $(sort $(LIBS))
 
-include tests/tests.mk
-
 .PHONY: clean default all tests
 
-default: all
 
 debug:
 	@echo src $(SRC)
@@ -26,9 +26,13 @@ debug:
 	@echo arch $(ARCH)
 	@echo vpath $(VPATH)
 
-all: libsmear.a tests
+all: libsmear.a libsmear.dmp tests
+
 
 -include $(OBJ:.o=.d)
+
+%.dmp: %.a
+	objdump -dSt $< > $@
 
 obj/%.d: %.c # Slightly modified from GNU Make tutorial
 	@set -e; rm -f $@; \
@@ -37,10 +41,11 @@ obj/%.d: %.c # Slightly modified from GNU Make tutorial
 	  rm -f $@.$$$$
 
 libsmear.a: $(OBJ)
-	ar -cvq $@ $(OBJ)
+	$(LD) -r -o $@ $^
+	objcopy --localize-hidden $@
 
 obj/%.o: %.c
 	$(CC) $(CFLAGS) $(INCLUDE) $(LIBS) -c -o $@ $<
 
 clean:
-	rm -f obj/* *.a test-*
+	rm -f obj/* *.a test-* *.dmp
