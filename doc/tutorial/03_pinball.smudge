@@ -1,0 +1,13 @@
+// 03_pinball.smudge
+pinball
+{
+   * idle
+     [
+          coin --> run
+     ],
+     run
+     [
+          target -(@incScore)-,
+          drain --> idle
+     ],
+}

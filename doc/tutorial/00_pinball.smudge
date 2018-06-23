@@ -1,0 +1,12 @@
+// 00_pinball.smudge
+pinball
+{
+   * idle
+     [
+          coin --> run
+     ],
+     run
+     [
+          drain --> idle
+     ],
+}

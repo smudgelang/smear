@@ -1,0 +1,11 @@
+pinball
+{
+   * idle
+     [
+          coin --> run
+     ],
+     run
+     [
+          drain --> idle
+     ],
+}

@@ -1,0 +1,47 @@
+pinball
+{
+   * power-on -(@lockPaddles)-> idle,
+     idle
+     [
+          coin -(coin_validator.coin)-> check-coin,
+     ],
+     check-coin
+     [
+          good-coin --> prepare-ball,
+          bad-coin -(@soundAlarm)-> idle
+     ],
+     prepare-ball (@releaseBall, @resetScore, @unlockPaddles)
+     [
+          plunger --> run
+     ],
+     run (@startSound)
+     [
+          drain --> idle,
+          tilt --> idle,
+          target -(@incScore)-
+     ] (@displayScore, @lockPaddles),
+     lockout (@displayError, @startTimer)
+     [
+          timerExpired --> idle,
+          _ --
+     ] (@cancelTimer),
+     _
+     [
+          coin -(@rejectCoin)-
+     ]
+}
+
+coin_validator
+{
+   * wait
+     [
+          coin --> validate
+     ],
+
+     validate (@checkCoin)
+     [
+          coin -(@rejectCoin)-,
+          valid -(pinball.good-coin)-> wait,
+          invalid -(pinball.bad-coin)-> wait
+     ]
+}
