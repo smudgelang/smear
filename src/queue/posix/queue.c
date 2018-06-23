@@ -36,7 +36,7 @@ static size_t real_index(size_t large, size_t capacity)
 
 static void grow_q(queue_t *q)
 {
-    void *bigger;
+    const void **bigger;
     size_t real_r, real_w;
 
     bigger = reallocarray(q->ring, q->capacity * 2, sizeof(*q->ring));
@@ -54,8 +54,8 @@ static void grow_q(queue_t *q)
         size_t bytes;
 
         // Move indices [0, real_w) up to capacity.
-        bytes = real_w * sizeof(q->ring[0]);
-        memmove(&q->ring[q->capacity], q->ring, bytes);
+        bytes = real_w * sizeof(bigger[0]);
+        memmove(&bigger[q->capacity], &bigger[0], bytes);
     }
 
     while (q->read > q->capacity)
@@ -63,10 +63,7 @@ static void grow_q(queue_t *q)
         q->read -= q->capacity;
         q->write -= q->capacity;
     }
-    if (q->write == q->read)
-    {
-        q->write = q->capacity;
-    }
+
     q->capacity *= 2;
     q->ring = bigger;
     return;
@@ -153,6 +150,7 @@ bool dequeue(queue_t *q, const void **value)
         goto fail;
     index = real_index(q->read, q->capacity);
     *value = q->ring[index];
+    q->ring[index] = NULL;
     q->read++;
     if (size_LH(q) == 0)
         pthread_cond_broadcast(&q->empty);

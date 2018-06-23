@@ -19,6 +19,7 @@
     {                                                                  \
         void *msg;                                                     \
         msg = malloc(sizeof(e));                                       \
+        if (msg == NULL) SMUDGE_panic();                               \
         memcpy(msg, &e, sizeof(e));                                    \
         SRT_send_message(msg, CAT(m, _handler));                       \
     }
