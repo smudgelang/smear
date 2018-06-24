@@ -1,13 +1,14 @@
-/* 05_main.c */
+/* 08_main.c */
 #include <stdio.h>
 #include <unistd.h>
 #include <signal.h>
 #include <time.h>
 #include <smear.h>
-#include "05_pinball.h"
-#include "05_pinball_ext.h"
+#include "08_pinball.h"
+#include "08_pinball_ext.h"
 
 SRT_HANDLERS(pinball)
+SRT_HANDLERS(flippers)
 
 static int score;
 static int highScore;
@@ -45,14 +46,34 @@ void startTimer(void)
     timer_settime(tiltTimer, 0, &delay, NULL);
 }
 
+void rejectCoin(const pinball_coin_t *unused)
+{
+    printf("Coin at a bad time. Dropping it.\n");
+}
+
 void displayError(void)
 {
     printf("TILT!\n");
 }
 
-void lockPaddles(void)
+void flipLeft(const flippers_left_t *unused)
 {
-    printf("Locking paddles.\n");
+    printf("fLip");
+}
+
+void flipRight(const flippers_right_t *unused)
+{
+    printf("flipR");
+}
+
+void clickLock(void)
+{
+    printf("Locking flippers.\n");
+}
+
+void soundFree(void)
+{
+    printf("Flippers away!\n");
 }
 
 void sadSound(const pinball_drain_t *unused)
@@ -71,7 +92,7 @@ void incScore(const pinball_target_t *unused)
     printf("Ding");
 }
 
-void displayScore(void)
+void displayScore(const pinball_drain_t *unused)
 {
     printf("Score: %d\n", score);
     if (score > highScore)
@@ -101,6 +122,19 @@ int main(void)
     setupTimer();
     SRT_init();
     SRT_run();
+
+    pinball_coin(NULL);
+    pinball_plunger(NULL);
+    pinball_coin(NULL);
+    SRT_wait_for_idle();
+    for (int i = 0; i < 4; i++)
+    {
+        flippers_left(NULL);
+        pinball_target(NULL);
+    }
+    flippers_right(NULL);
+    pinball_drain(NULL);
+
     pinball_coin(NULL);
     pinball_plunger(NULL);
     pinball_target(NULL);

@@ -1,11 +1,11 @@
-/* 05_main.c */
+/* 07_main.c */
 #include <stdio.h>
 #include <unistd.h>
 #include <signal.h>
 #include <time.h>
 #include <smear.h>
-#include "05_pinball.h"
-#include "05_pinball_ext.h"
+#include "07_pinball.h"
+#include "07_pinball_ext.h"
 
 SRT_HANDLERS(pinball)
 
@@ -45,6 +45,11 @@ void startTimer(void)
     timer_settime(tiltTimer, 0, &delay, NULL);
 }
 
+void rejectCoin(const pinball_coin_t *unused)
+{
+    printf("Coin at a bad time. Dropping it.\n");
+}
+
 void displayError(void)
 {
     printf("TILT!\n");
@@ -71,7 +76,7 @@ void incScore(const pinball_target_t *unused)
     printf("Ding");
 }
 
-void displayScore(void)
+void displayScore(const pinball_drain_t *unused)
 {
     printf("Score: %d\n", score);
     if (score > highScore)
@@ -101,6 +106,14 @@ int main(void)
     setupTimer();
     SRT_init();
     SRT_run();
+
+    pinball_coin(NULL);
+    pinball_plunger(NULL);
+    pinball_coin(NULL);
+    for (int i = 0; i < 4; i++)
+        pinball_target(NULL);
+    pinball_drain(NULL);
+
     pinball_coin(NULL);
     pinball_plunger(NULL);
     pinball_target(NULL);

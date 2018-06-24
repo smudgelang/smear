@@ -4,7 +4,7 @@ SMEAR_ROOT ?= $(HOME)/smear
 SMUDGE_OPTIONS_PNG=--dot-fmt=Png
 CC=gcc
 CFLAGS=-Wall -Werror -Wextra -Wno-unused-parameter -ggdb3
-LFLAGS=-lsmear -pthread
+LFLAGS=-lsmear -pthread -lrt
 
 # This is the path to your libsmear.a. Change it if it's somewhere else.
 LPATH=-L$(SMEAR_ROOT)

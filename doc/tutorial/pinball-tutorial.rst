@@ -1,5 +1,5 @@
 ===============
-Pinball Example
+Smudge Tutorial
 ===============
 
 .. contents::
@@ -15,22 +15,32 @@ Simple Pinball Machine
 
 Welcome to the Smudge tutorial! This is intended for people familiar
 with C and the \*nix environment. In particular, it will assume a good
-knowledge of the C language, a working understanding of libraries and
-linkers, and good facility with the command line. It is assumed that
-your environment is Linux and supports pthreads. Other environments
-can be made to work, but might require more advanced knowledge.
+knowledge of the C programming language, a working understanding of
+libraries and linkers, and good facility with the command line. It is
+assumed that your environment is Linux and supports pthreads. Other
+environments can be made to work, but might require more advanced
+knowledge.
 
-In this tutorial, we'll create a simple pinball machine game. It will
-accept coins from players, drop a ball, then accumulate a score until
-the ball is lost through the drain.
+.. sidebar:: GraphViz
+
+   GraphViz is a prerequisite for running Smudge. If you installed
+   Smudge from a .deb package, you should already have it. Otherwise,
+   you may need to go get graphviz. If you don't have it, Smudge will
+   exit with an error instead of generating code for you.
+
+In this tutorial, we'll create a simple pinball game. A pinball game
+has a start, a middle, and an end, and you can launch plungers, hit
+targets, knock bumpers, and go down the drain, so with everything that
+can happen, and all the ways it can happen, what better way to
+represent a pinball machine than with a state machine?
 
 .. figure:: 00_pinball.png
    :width: 500
 
-The drawing above shows a state diagram for this simple machine. As
-you can see, it starts in the *idle* state. The *coin* event moves it
-to *run* and *drain* (when the ball falls through the drain) moves it
-back to idle.
+The drawing above shows a state diagram for the beginnings of our
+pinball game. As you can see, it starts in the *idle* state. The
+*coin* event moves it to *run* and *drain* (when the ball falls
+through the drain) moves it back to idle.
 
 The Smudge source code for the above machine is shown below:
 
@@ -128,7 +138,7 @@ installed Smear system-wide, you can leave out those paths.
 Events
 ------
 
-Once the whole thing is built, I run the generated **00_pinball** and
+Once the whole thing is built, we run the generated **00_pinball** and
 it produces no output. Let's see if we can change it to actually
 respond to some events. First, let's switch to example 1 (which has
 the same Smudge source as 0) and run Smudge on it.
@@ -161,15 +171,15 @@ And when we compile and run this program, we get:
 
 ::
 
-   $ ./01_pinball
+   $ ./01_pinball 
    Sending coin event.
    Starting runtime.
    Current state: idle
-   Waiting until the machine is idle.
+   Waiting for events to be handled.
    Current state: run
    Sending drain event.
    Current state: run
-   Waiting until the machine is idle.
+   Waiting for events to be handled.
    Current state: idle
 
 Note how the events aren't actually processed until the
@@ -183,6 +193,34 @@ you can explicitly wait until all the pending events have been
 handled. That second option is what the ``SRT_wait_for_idle`` function
 does. It acts like a fence in that all events sent before it are
 handled before it returns.
+
+.. sidebar:: Smear, the runtime environment
+
+   We've mostly glossed over all the ``SRT_`` functions getting called
+   in our example **main.c** programs. SRT stands for Smear RunTime,
+   and it does a lot of the work of actually making our state machines
+   run. The functions called in all of the example **main.c** programs
+   are defined and documented in **smear.h**.
+
+   By itself, Smudge generates very system-agnostic code. That means
+   it needs the user to implement certain functions for event queueing
+   and dispatch, as well as error handling and memory management. You
+   can see these functions all listed in **01_pinball_ext.h**.
+
+   When you link against Smear with ``-lsmear``, you're getting all
+   these ``SMUDGE_`` functions defined for you. The call to
+   ``SRT_HANDLERS(pinball)`` defines ``pinball_Send_Message`` in a way
+   that works with the rest of Smear's implementation.
+
+   This tutorial uses Smear because implementing all those functions
+   is a distraction. However, Smudge just relies on those functions in
+   **01_pinball_ext.h** being defined and having certain
+   semantics. Smear (and this tutorial) depends on things from the
+   POSIX environment, but there's no reason why Smudge code can't be
+   ported to a system that doesn't support pthreads. In fact, when
+   Smudge was originally developed, the target system didn't look
+   anything like POSIX.
+
 
 Error Handling
 --------------
@@ -199,11 +237,11 @@ returns early:
    Sending coin event.
    Starting runtime.
    Current state: idle
-   Waiting until the machine is idle.
+   Waiting for events to be handled.
    Current state: run
    Sending drain event.
    Current state: run
-   Waiting until the machine is idle.
+   Waiting for events to be handled.
    Current state: idle
    pinball[idle]: Unhandled event "drain"
    $ echo $?
@@ -222,8 +260,11 @@ transition, but the only thing we know about different states is that
 they can handle different events. Enter side effects, to make your
 state machines do stuff.
 
+@functions
+----------
+
 The first kind of side effect we're going to talk about is called an
-``@function``. It is so named because in the Smudge source, it begins
+@function. It is so named because in the Smudge source, it begins
 with the ``@`` character, and it calls a C function that you will
 write. Let's add a new event to the *run* state to increase the
 player's score every time the ball hits a target.
@@ -232,24 +273,23 @@ player's score every time the ball hits a target.
    :include: 03_pinball.smudge
    :linenos:
 
-There are two new things in this example: an ``@function`` called
+There are two new things in this example: an @function called
 ``incScore``, and the dash. Dashes are just like arrows, except they
 don't cause state transitions. I know, you're thinking to yourself
 that this new ``-(...)-`` thing is way different, because in addition
-to not having a ``>`` at the end, it's got this side effect thing
+to not having a ``>`` at the end, it's got this side effect stuff
 surrounded by parentheses. Well, it turns out that the syntax for an
 arrow is actually ``-(side-effect-list)->`` and that ``-->`` is
 shorthand for ``-()->``. Likewise, there's a dash shorthand: ``--`` is
-the same as ``-()-``. It gets used less often, though, since it just
-silently ignores an event.
+the same as ``-()-``. It just silently ignores the event in question.
 
 Running **smudge** on this new example gives us the expected
-**03_pinball...** files. However, if you looked at
-**02_pinball_ext.h** and **03_pinball_ext.h**, you'd see a difference:
-there's a new function prototype for ``incScore`` in there. If you try
-to compile with the same stuff that's in **02_main.c**, you'll se a
-linker error. It wants that ``incScore`` function to be defined. Let's
-do that.
+**03_pinball...** files. However, if you look at **02_pinball_ext.h**
+and **03_pinball_ext.h**, you'll see a difference: there's a new
+function prototype for ``incScore`` in there. If you try to compile
+with the same stuff that's in **02_main.c**, you'll se a linker
+error. It wants that ``incScore`` function to be defined. Let's do
+that.
 
 .. code-block:: c
    :include: 03_main.c
@@ -263,6 +303,36 @@ Running this new program gives us the expected
    ding ding, new score: 1
    ding ding, new score: 2
 
+.. sidebar:: Names
+
+   You may have noticed that names of states use hyphens to separate
+   words while names of events and @functions use camel case. In the
+   case of @functions, the reason is obvious. The names given in
+   Smudge source are literal C identifiers and only valid C
+   identifiers make valid @function names.
+
+   Event names get turned into C identifiers, but not directly. Valid
+   event names include all sorts of crazy things like
+   ``World's-best-event`` and ``"The system is
+   down!"``. Unfortunately, sending events like this in C gets
+   tricky. Since ``"The system is down!"`` isn't a valid C identifier,
+   Smudge mangles its name into something that's both valid C and
+   uniquely maps back to the real name. To send ``"The system is
+   down!"`` from C, you would have to call a function called
+   ``pinball_The_20_system_20_is_20_down_21__19__``. However, error
+   messages for unhandled events will still print the unmangled event
+   name. So for events that are strictly internal to Smudge, non-C
+   names are fine.
+
+   State machine names should be valid C identifiers for similar
+   reasons, but state names are never seen as raw identifiers outside
+   of Smudge's generated code. So it's fine to name your states things
+   like ``prepare-ball``. The ``Current_state_name`` for your state
+   machine will always return the real name.
+
+Enter/Exit Functions
+--------------------
+
 So now we can have side effects, that's cool. They also give us a
 reason to be in different states, since we can react to the same event
 with different side effects depending on which state we're in. There's
@@ -275,13 +345,13 @@ use some to make our pinball machine a little more flashy.
    :linenos:
 
 Here in **04_pinball.smudge**, we've gone nuts with the
-``@functions``. The new *prepare-ball* state executes 3 of them when
-it's entered. Note that Smudge guarantees that ``@function`` side
-effects will be executed in the order they're listed. The *run* state
-here demonstrates why *target* doesn't look like ``target
--(@incScore)-> run``. If it did, it would execute the exit-function
-then the enter-function for *run*. That may be desirable in some
-instances, but it's not in this one.
+@functions. The new *prepare-ball* state executes 3 of them when it's
+entered. Note that Smudge guarantees that @function side effects will
+be executed in the order they're listed. The *run* state here
+demonstrates why *target* doesn't look like ``target -(@incScore)->
+run``. If it did, it would execute the exit-function then the
+enter-function for *run*. That may be desirable in some instances, but
+it's not in this one.
 
 Let's make a **04_main.c** to go with this. Nothing new here, just a
 whole lot of events getting sent and handled.
@@ -324,10 +394,10 @@ And when it's built and run:
 Default Handlers
 ================
 
-People have started doing bad and unexpected things to our pinball
-machine. Someone put two coins in, one after the other and made the
-whole thing crash. Other people keep lifting the front of the machine
-to artificially boost their scores.
+Now that we have users, they've started doing bad and unexpected
+things to our pinball machine. Someone figured out they could lift the
+front of the machine to prevent the ball from dropping and get cheaty
+high scores.
 
 Any-Event
 ---------
@@ -342,30 +412,189 @@ we have to do is hook up the event to our Smudge machine.
 Combined with implementations of ``displayError`` and ``startTimer``
 in **05_main.c**, this new *lockout* state ignores all events until
 the timer expires.
-      
+
+The way it accomplishes this is with an *any-event* handler. The
+*any-event* is a special event. It's spelled with a single ``_`` and
+catches all of the events not explicitly listed in the state. This
+way, we can ignore all of the player's events for a little while to
+give them some time to think about whether or not cheating at pinball
+is a winning strategy for life.
+
 Any-State
 ---------
+
+This is pretty nice, but would-be cheaters are now complaining about
+machines eating their money. The complaint goes like this: First, they
+lift up the machine to try to get extra points. The game detects this
+and locks them out. While they're waiting for the tilt timer to
+expire, they shove more coins in. Of course, we're ignoring the coin
+event, so it ends up getting lost in the machine and eaten.
+
+Meh, those people got what they deserved. There is a real problem,
+though, and it's that players who insert 2 coins in rapid succession
+lose their second coin to the bitbucket.
+
+So let's reject coins in states other than *idle*. As a moderately
+unfortunate side effect, coins in the *lockout* state will be rejected
+too. I suppose that's alright. At least it will reduce the number of
+complaints we have to hear from cheaters.
+
+Oh, and we should probably use the tilt sensor in all the states, not
+just while the game is running.
+
+.. code-block:: c
+   :include: 06_pinball.smudge
+   :linenos:
+
+That's better. Now, what's going on here? There's a new state called
+``_`` and it's handling the tilt and coin events. Just like the
+*any-event*, this is the *any-state*. It handles events for states
+that don't explicitly handle them. You can also put an *any-event* in
+the *any-state* if you never want to get an unhandled event error.
+
+In this instance, we're rejecting coins whenever they're inserted
+(other than while idle) and locking the machine if it gets a tilt
+while not already locked out.
+
+You might be wondering how we know how a given event will be handled,
+if there's a handler for it in the *any-state* and the state it's in
+handles the *any-event*. For that, we have this lovely prioritized
+table:
+
++-------+-------+
+| state | event |
++=======+=======+
+| named | named |
++-------+-------+
+|  any  | named |
++-------+-------+
+| named |  any  |
++-------+-------+
+|  any  |  any  |
++-------+-------+
+
+So if an event comes in and it's handled with a named event handler in
+the machine's current state, it's always handled there. Named event
+handlers in the *any-state* are checked next, followed by *any-event*
+handlers in the current state. That means that if we get a *tilt*
+event in the *lockout* state, it will be ignored by the handler in
+*lockout* instead of causing us to re-enter *lockout*. Likewise,
+*coin* events are handled in *idle* directly and rejected anywhere else.
+
+The last place it looks is the *any-event* in the *any-state*, just
+like a ``default`` clause in a ``switch`` statement. Unlike switches
+in C, though, if no handler is found for an event Smudge will cause an
+error.
+
 
 Transient States
 ================
 
-This pinball machine is starting to work pretty well, but it's having
-some boot-up problems. There's stuff it wants to do when it powers on
-that's not getting done.
+We've started hearing reports of another bug: The paddles get locked
+when the machine turns on, and unlocked when the ball is placed at the
+plunger, but they're not being locked when the machine tilts. People
+are continuing to play, even though they can't get points, during the
+tilt lockout period.
 
-To fix this, we're going to introduce a new initial state called
-*power-on* that instantly transitions to the *idle* state.
+They're also still tilting the machine a lot. I think maybe if we zero
+out their score upon *tilt* they might stop.
 
 .. code-block:: c
-   :include: 05_pinball.smudge
+   :include: 07_pinball.smudge
    :linenos:
 
-Transient states take this ``state -(side-effect-list)-> next-state``
-form. They don't handle any events, since the state machine
-transitions out of a transient state as soon as it's entered.
+You can see on line 4 we've added an ``initialize`` state. Transient
+states take this ``state -(side-effect-list)-> next-state`` form. They
+don't handle any events, since the state machine transitions out of a
+transient state as soon as it's entered. Just like with exit events,
+any events sent as a side effect of going through a transient state
+will be handled in the next state.
 
 Multiple Machines
 =================
 
+Smudge is doing a pretty great job of handling state. Right now we
+have this paddle lock function that sets some state somewhere off
+screen. Let's instead turn it into its own Smudge state machine.
+
+.. code-block:: c
+   :include: 08_pinball.smudge
+   :linenos:
+
+This new *flippers* machine will handle all the paddle events. If
+they're unlocked, the flippers will flip. If not, they won't. Pretty
+simple, right? The only really new thing here, aside from putting more
+than one state machine in a file, is how they
+communicate. ``flippers.lock`` and ``flippers.unlock`` are sent from
+the *pinball* game's state machine to the *flippers* state machine as
+side effects. The general syntax for this kind of thing is
+``destination-machine.event``. If you're sending an event within a
+machine, you can omit the ``destination-machine`` part.
+
+Since *flippers* is a new state machine, our **08_main.c** has to
+invoke the ``SRT_HANDLERS`` macro again for it. Here's an example
+program that uses everything we've seen so far:
+
+.. code-block:: c
+   :include: 08_main.c
+   :linenos:
+
+Note the ``SRT_wait_for_idle`` call on line 123. It's there because we
+have state machines sending messages around to each other so we can't
+just queue up all our events and let loose.
+
 Event Payloads
 ==============
+
+This machine is looking pretty good. The only thing wrong with it is
+that all the targets are worth the same number of points (1). Other
+pinball games have higher point values for harder to reach targets.
+
+To add this feature, we don't have to touch the Smudge code at
+all. Instead, we use this argument that we've been passing to all our
+events. So far it's always been ``NULL`` but what if we want to put
+something there? Let's take a look at the definition of
+``pinball_target`` in **09_pinball.h**.
+
+.. code-block:: c
+
+   // in 09_pinball.h
+   typedef struct pinball_target_t pinball_target_t;
+   void pinball_target(const pinball_target_t *);
+   // and in 09_pinball_ext.h
+   extern void incScore(const pinball_target_t *);
+
+Well that's not very illuminating. What Smudge did here was generate
+an incomplete type so that ``pinball_target`` would take a particular
+type. That type of thing is what our ``incScore`` @function accepts,
+so we can be sure the event payload came along unchanged. Since it's
+an incomplete type definition, we have to define what goes in it
+before we can use it. Here's a simple little struct definition that we
+can use to send a score along with our *target* events.
+
+.. code-block:: c
+
+   struct pinball_target_t
+   {
+       int value;
+   };
+
+While we're at it, let's make a function that returns a new
+target. The runtime expects event payloads to be pointers to memory
+allocated with ``malloc`` so let's give it that.
+
+.. code-block:: c
+
+    static pinball_target_t *newTarget(int val)
+    {
+        pinball_target_t *tgt;
+        tgt = malloc(sizeof(*tgt));
+        if (tgt != NULL)
+            tgt->value = val;
+        return tgt;
+    }
+
+**09_main.c** uses this function to send different targets with
+different point values. Note that when using Smear, event payloads
+like this are always freed after being handled, so you really do need
+to call ``malloc`` for each event that gets sent.

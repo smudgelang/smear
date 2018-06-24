@@ -21,7 +21,7 @@ int main(void)
     SRT_run();
     print_state();
 
-    printf("Waiting until the machine is idle.\n");
+    printf("Waiting for events to be handled.\n");
     SRT_wait_for_idle();
     print_state();
 
@@ -29,7 +29,7 @@ int main(void)
     pinball_drain(NULL);
     print_state();
 
-    printf("Waiting until the machine is idle.\n");
+    printf("Waiting for events to be handled.\n");
     SRT_wait_for_idle();
     print_state();
 

@@ -1,3 +1,4 @@
+// 08_pinball.smudge
 pinball
 {
    * power-on -(flippers.lock)-> idle,
@@ -36,8 +37,8 @@ flippers
      ],
      unlocked (@soundFree)
      [
-          left-flipper -(@flipLeft)-,
-          right-flipper -(@flipRight)-,
+          left -(@flipLeft)-,
+          right -(@flipRight)-,
           lock --> locked
      ]
 }

@@ -1,13 +1,19 @@
-/* 05_main.c */
+/* 09_main.c */
 #include <stdio.h>
 #include <unistd.h>
 #include <signal.h>
 #include <time.h>
 #include <smear.h>
-#include "05_pinball.h"
-#include "05_pinball_ext.h"
+#include "09_pinball.h"
+#include "09_pinball_ext.h"
 
 SRT_HANDLERS(pinball)
+SRT_HANDLERS(flippers)
+
+struct pinball_target_t
+{
+    int value;
+};
 
 static int score;
 static int highScore;
@@ -45,14 +51,43 @@ void startTimer(void)
     timer_settime(tiltTimer, 0, &delay, NULL);
 }
 
+static pinball_target_t *newTarget(int val)
+{
+    pinball_target_t *tgt;
+    tgt = malloc(sizeof(*tgt));
+    if (tgt != NULL)
+        tgt->value = val;
+    return tgt;
+}
+
+void rejectCoin(const pinball_coin_t *unused)
+{
+    printf("Coin at a bad time. Dropping it.\n");
+}
+
 void displayError(void)
 {
     printf("TILT!\n");
 }
 
-void lockPaddles(void)
+void flipLeft(const flippers_left_t *unused)
 {
-    printf("Locking paddles.\n");
+    printf("fLip");
+}
+
+void flipRight(const flippers_right_t *unused)
+{
+    printf("flipR");
+}
+
+void clickLock(void)
+{
+    printf("Locking flippers.\n");
+}
+
+void soundFree(void)
+{
+    printf("Flippers away!\n");
 }
 
 void sadSound(const pinball_drain_t *unused)
@@ -65,13 +100,16 @@ void unlockPaddles(void)
     printf("Unlocking paddles. Whirrrrrr\n");
 }
 
-void incScore(const pinball_target_t *unused)
+void incScore(const pinball_target_t *tgt)
 {
-    score++;
+    if (tgt != NULL)
+        score += tgt->value;
+    else
+        score++;
     printf("Ding");
 }
 
-void displayScore(void)
+void displayScore(const pinball_drain_t *unused)
 {
     printf("Score: %d\n", score);
     if (score > highScore)
@@ -101,18 +139,32 @@ int main(void)
     setupTimer();
     SRT_init();
     SRT_run();
+
     pinball_coin(NULL);
     pinball_plunger(NULL);
-    pinball_target(NULL);
-    pinball_target(NULL);
+    pinball_coin(NULL);
+    SRT_wait_for_idle();
+    for (int i = 0; i < 4; i++)
+    {
+        flippers_left(NULL);
+        pinball_target(newTarget((i + 2) * 8));
+    }
+    flippers_right(NULL);
+    pinball_drain(NULL);
+
+    pinball_coin(NULL);
+    pinball_plunger(NULL);
+    pinball_target(newTarget(100));
+    pinball_target(newTarget(100));
     pinball_tilt(NULL);
     pinball_coin(NULL);
     pinball_plunger(NULL);
-    pinball_target(NULL);
+    pinball_target(newTarget(1000));
     pinball_drain(NULL);
 
     SRT_wait_for_idle();
     sleep(3);
+    SRT_wait_for_idle();
     
     SRT_stop();
     teardownTimer();

@@ -1,7 +1,8 @@
-// 06_pinball.smudge
+// 07_pinball.smudge
 pinball
 {
-   * idle (@lockPaddles)
+   * initialize -(@lockPaddles)-> idle,
+     idle
      [
           coin --> prepare-ball
      ],
@@ -12,9 +13,9 @@ pinball
      run (@startSound)
      [
           target -(@incScore)-,
-          drain -(@sadSound)-> idle
-     ] (@displayScore),
-     lockout (@displayError, @startTimer)
+          drain -(@sadSound, @displayScore)-> idle
+     ] (@lockPaddles),
+     lockout (@resetScore, @displayError, @startTimer)
      [
           timerExpired --> idle,
           tilt --,
