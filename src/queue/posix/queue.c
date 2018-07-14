@@ -1,4 +1,3 @@
-#define _GNU_SOURCE // for reallocarray
 #include <stdlib.h>
 #include <stdio.h>
 #include <assert.h>
@@ -39,13 +38,14 @@ static void grow_q(queue_t *q)
     const void **bigger;
     size_t real_r, real_w;
 
-    bigger = reallocarray(q->ring, q->capacity * 2, sizeof(*q->ring));
+    bigger = realloc(q->ring, q->capacity * 2 * sizeof(*q->ring));
     if (bigger == NULL)
     {
         // It's fine, maybe we're out of memory. The enqueue
         // operation will fail, but we don't need to crash here.
         return;
     }
+    q->ring = NULL;
 
     real_r = real_index(q->read, q->capacity);
     real_w = real_index(q->write, q->capacity);
