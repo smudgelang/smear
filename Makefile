@@ -1,12 +1,12 @@
 OBJDIR := obj
 SRCDIR := src
-MODULES := smear queue
+MODULES := smear cancelq
 LIBS :=
 SRC := 
 CC := gcc
 CFLAGS := -ggdb3 -std=c99 -Wall -Werror -Wextra -Wno-unused-parameter -Wno-unused-function -fvisibility=hidden
 INCLUDE := -Iinclude $(foreach mod, $(MODULES), -Isrc/$(mod))
-VPATH := $(foreach mod, $(MODULES), src/$(mod))
+VPATH := $(foreach mod, $(MODULES), src/$(mod)) include
 
 default: all
 
@@ -20,10 +20,12 @@ LIBS := $(sort $(LIBS))
 
 
 debug:
+	@echo inc $(INCLUDE)
 	@echo src $(SRC)
 	@echo libs $(LIBS)
 	@echo obj $(OBJ)
 	@echo arch $(ARCH)
+	@echo os $(OS)
 	@echo vpath $(VPATH)
 
 all: libsmear.a libsmear.dmp tests
