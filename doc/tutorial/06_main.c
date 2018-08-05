@@ -23,11 +23,6 @@ void cancelTimer(void)
     SRT_cancel(timer);
 }
 
-void rejectCoin(const pinball_coin_t *unused)
-{
-    printf("Coin at a bad time. Dropping it.\n");
-}
-
 void displayError(void)
 {
     printf("TILT!\n");

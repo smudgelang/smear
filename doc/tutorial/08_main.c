@@ -8,7 +8,6 @@
 #include "08_pinball_ext.h"
 
 SRT_HANDLERS(pinball)
-SRT_HANDLERS(flippers)
 
 static int score;
 static int highScore;
@@ -34,24 +33,9 @@ void displayError(void)
     printf("TILT!\n");
 }
 
-void flipLeft(const flippers_left_t *unused)
+void lockPaddles(void)
 {
-    printf("fLip");
-}
-
-void flipRight(const flippers_right_t *unused)
-{
-    printf("flipR");
-}
-
-void clickLock(void)
-{
-    printf("Locking flippers.\n");
-}
-
-void soundFree(void)
-{
-    printf("Flippers away!\n");
+    printf("Locking paddles.\n");
 }
 
 void sadSound(const pinball_drain_t *unused)
@@ -103,13 +87,8 @@ int main(void)
     pinball_coin(NULL);
     pinball_plunger(NULL);
     pinball_coin(NULL);
-    SRT_wait_for_idle();
     for (int i = 0; i < 4; i++)
-    {
-        flippers_left(NULL);
         pinball_target(NULL);
-    }
-    flippers_right(NULL);
     pinball_drain(NULL);
 
     pinball_coin(NULL);

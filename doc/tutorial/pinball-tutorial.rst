@@ -391,16 +391,13 @@ And when it's built and run:
     24	High score: 100
     25	Locking paddles.
 
-Default Handlers
-================
+Timers
+------
 
 Now that we have users, they've started doing bad and unexpected
 things to our pinball machine. Someone figured out they could lift the
 front of the machine to prevent the ball from dropping and get cheaty
 high scores.
-
-Any-Event
----------
 
 Fortunately for us, there's a tilt sensor in our pinball machine. All
 we have to do is hook up the event to our Smudge machine.
@@ -409,16 +406,53 @@ we have to do is hook up the event to our Smudge machine.
    :include: 05_pinball.smudge
    :linenos:
 
-Combined with implementations of ``displayError``, ``startTimer``, and
-``cancelTimer`` in **05_main.c**, this new *lockout* state ignores all
-events until the timer expires.
+This uses the enter and exit events we just talked about to guarantee
+that the timer is limited in scope to the ``lockout`` state. All
+that's left is to implement the timers.
 
-The way it accomplishes this is with an *any-event* handler. The
-*any-event* is a special event. It's spelled with a single ``_`` and
-catches all of the events not explicitly listed in the state. This
-way, we can ignore all of the player's events for a little while to
-give them some time to think about whether or not cheating at pinball
-is a winning strategy for life.
+Fortunately for us, Smear has support for cancellable timers. To use
+it, we call ``SRT_delayed_send()`` with the name of the state machine,
+the name of the event, a pointer to the event payload (NULL for now,
+explained later), and a delay in milliseconds. This function returns a
+``cancel_token_t``, which gets used later exactly once in a call
+to ``SRT_cancel``.
+
+.. code-block:: c
+   :include: 05_main.c
+   :linenos:
+
+If you call ``SRT_cancel`` before the timer expires, the event won't
+fire. If you call it after the timer expires, nothing bad will
+happen. It is important to call ``SRT_cancel`` eventually, though,
+because in addition to canceling the timer, it cleans up some internal
+resources that are allocated for it.
+
+In **05_main.c** on lines 18 and 23, we can see how these features are
+used.
+
+This way, we can ignore all of the player's events for a little while
+to give them some time to think about whether or not cheating at
+pinball is a winning strategy for life.
+
+Default Handlers
+================
+
+That timer was great, but explicitly ignoring every single event that
+could possibly happen is verbose and error prone. If we added a new
+event, we'd have to remember to put it in *lockout* or there would
+be a bug.
+
+Any-Event
+---------
+
+Lucky for us, Smudge comes with a handy feature called the
+*any-event*. It's a special event, spelled ``_``, that catches all
+events not explicitly listed in the state. You can see it in action in
+**06_pinball.smudge**.
+
+.. code-block:: c
+   :include: 06_pinball.smudge
+   :linenos:
 
 Any-State
 ---------
@@ -443,7 +477,7 @@ Oh, and we should probably use the tilt sensor in all the states, not
 just while the game is running.
 
 .. code-block:: c
-   :include: 06_pinball.smudge
+   :include: 07_pinball.smudge
    :linenos:
 
 That's better. Now, what's going on here? There's a new state called
@@ -500,7 +534,7 @@ They're also still tilting the machine a lot. I think maybe if we zero
 out their score upon *tilt* they might stop.
 
 .. code-block:: c
-   :include: 07_pinball.smudge
+   :include: 08_pinball.smudge
    :linenos:
 
 You can see on line 4 we've added an ``initialize`` state. Transient
@@ -518,7 +552,7 @@ have this paddle lock function that sets some state somewhere off
 screen. Let's instead turn it into its own Smudge state machine.
 
 .. code-block:: c
-   :include: 08_pinball.smudge
+   :include: 09_pinball.smudge
    :linenos:
 
 This new *flippers* machine will handle all the paddle events. If
@@ -531,12 +565,12 @@ side effects. The general syntax for this kind of thing is
 ``destination-machine.event``. If you're sending an event within a
 machine, you can omit the ``destination-machine`` part.
 
-Since *flippers* is a new state machine, our **08_main.c** has to
+Since *flippers* is a new state machine, our **09_main.c** has to
 invoke the ``SRT_HANDLERS`` macro again for it. Here's an example
 program that uses everything we've seen so far:
 
 .. code-block:: c
-   :include: 08_main.c
+   :include: 09_main.c
    :linenos:
 
 Note the ``SRT_wait_for_idle`` call on line 123. It's there because we
@@ -554,14 +588,14 @@ To add this feature, we don't have to touch the Smudge code at
 all. Instead, we use this argument that we've been passing to all our
 events. So far it's always been ``NULL`` but what if we want to put
 something there? Let's take a look at the definition of
-``pinball_target`` in **09_pinball.h**.
+``pinball_target`` in **10_pinball.h**.
 
 .. code-block:: c
 
-   // in 09_pinball.h
+   // in 10_pinball.h
    typedef struct pinball_target_t pinball_target_t;
    void pinball_target(const pinball_target_t *);
-   // and in 09_pinball_ext.h
+   // and in 10_pinball_ext.h
    extern void incScore(const pinball_target_t *);
 
 Well that's not very illuminating. What Smudge did here was generate
@@ -594,7 +628,7 @@ allocated with ``malloc`` so let's give it that.
         return tgt;
     }
 
-**09_main.c** uses this function to send different targets with
+**10_main.c** uses this function to send different targets with
 different point values. Note that when using Smear, event payloads
 like this are always freed after being handled, so you really do need
 to call ``malloc`` for each event that gets sent.

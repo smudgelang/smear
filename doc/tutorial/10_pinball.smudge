@@ -1,0 +1,44 @@
+// 10_pinball.smudge
+pinball
+{
+   * power-on -(flippers.lock)-> idle,
+     idle
+     [
+          coin --> prepare-ball
+     ],
+     prepare-ball (@releaseBall, @resetScore, flippers.unlock)
+     [
+          plunger --> run
+     ],
+     run (@startSound)
+     [
+          drain -(@sadSound, @displayScore)-> idle,
+          target -(@incScore)-
+     ] (flippers.lock),
+     lockout (@resetScore, @displayError, @startTimer)
+     [
+          timerExpired --> idle,
+          tilt --,
+          _ --
+     ] (@cancelTimer),
+     _
+     [
+          tilt --> lockout,
+          coin -(@rejectCoin)-
+     ]
+}
+
+flippers
+{
+   * locked (@clickLock)
+     [
+          unlock --> unlocked,
+          _ -- // Ignore flipper and lock events.
+     ],
+     unlocked (@soundFree)
+     [
+          left -(@flipLeft)-,
+          right -(@flipRight)-,
+          lock --> locked
+     ]
+}
