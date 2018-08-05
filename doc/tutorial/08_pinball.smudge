@@ -20,7 +20,7 @@ pinball
           timerExpired --> idle,
           tilt --,
           _ --
-     ],
+     ] (@cancelTimer),
      _
      [
           tilt --> lockout,

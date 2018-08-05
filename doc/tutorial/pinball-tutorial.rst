@@ -409,9 +409,9 @@ we have to do is hook up the event to our Smudge machine.
    :include: 05_pinball.smudge
    :linenos:
 
-Combined with implementations of ``displayError`` and ``startTimer``
-in **05_main.c**, this new *lockout* state ignores all events until
-the timer expires.
+Combined with implementations of ``displayError``, ``startTimer``, and
+``cancelTimer`` in **05_main.c**, this new *lockout* state ignores all
+events until the timer expires.
 
 The way it accomplishes this is with an *any-event* handler. The
 *any-event* is a special event. It's spelled with a single ``_`` and

@@ -11,38 +11,16 @@ SRT_HANDLERS(pinball)
 
 static int score;
 static int highScore;
-static timer_t tiltTimer;
-
-static void sendTimerExpired(union sigval unused)
-{
-    printf("Timer expiring.\n");
-    pinball_timerExpired(NULL);
-}
-
-static void setupTimer(void)
-{
-    struct sigevent sev;
-    sev.sigev_notify = SIGEV_THREAD;
-    sev.sigev_notify_function = sendTimerExpired;
-    sev.sigev_notify_attributes = NULL;
-    timer_create(CLOCK_MONOTONIC, &sev, &tiltTimer);
-}
-
-static void teardownTimer(void)
-{
-    if (timer_delete(tiltTimer) != 0)
-        perror("Failed to delete timer.");
-}
+static cancel_token_t timer;
 
 void startTimer(void)
 {
-    struct itimerspec delay;
+    timer = SRT_delayed_send(pinball, timerExpired, NULL, 2000);
+}
 
-    delay.it_value.tv_sec = 2;
-    delay.it_value.tv_nsec = 0;
-    delay.it_interval.tv_sec = 0;
-    delay.it_interval.tv_nsec = 0;
-    timer_settime(tiltTimer, 0, &delay, NULL);
+void cancelTimer(void)
+{
+    SRT_cancel(timer);
 }
 
 void rejectCoin(const pinball_coin_t *unused)
@@ -103,7 +81,6 @@ void startSound(void)
 
 int main(void)
 {
-    setupTimer();
     SRT_init();
     SRT_run();
 
@@ -128,6 +105,5 @@ int main(void)
     sleep(3);
     
     SRT_stop();
-    teardownTimer();
     return 0;
 }
