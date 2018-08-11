@@ -141,7 +141,7 @@ EXPORT_SYMBOL void SRT_cancel(cancel_token_t id)
 {
     mq_msg_t *qmsg;
 
-    if (cancel_or_release(q, id, (void **)&qmsg) != SUCCESS)
+    if (eq_cancel_or_release(q, id, (void **)&qmsg) != SUCCESS)
     {
         ERROR_MSG("Failed to release event.");
         exit(-4);
@@ -152,7 +152,7 @@ EXPORT_SYMBOL void SRT_cancel(cancel_token_t id)
 
 EXPORT_SYMBOL void SRT_init(void)
 {
-    q = new_event_queue();
+    q = eq_new();
 }
 
 EXPORT_SYMBOL void SRT_run(void)
@@ -174,5 +174,5 @@ EXPORT_SYMBOL void SRT_stop(void)
     void *rv;
     pthread_cancel(tid);
     pthread_join(tid, &rv);
-    free_event_queue(q);
+    eq_free(q);
 }

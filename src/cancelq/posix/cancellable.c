@@ -214,7 +214,7 @@ static void rm(event_queue_t *q, size_t idx)
     memset(&q->minheap[q->heapidx], 0, sizeof(q->minheap[q->heapidx]));
 }
 
-event_queue_t *new_event_queue(void)
+event_queue_t *eq_new(void)
 {
     event_queue_t *q;
 
@@ -234,7 +234,7 @@ event_queue_t *new_event_queue(void)
     return q;
 }
 
-bool free_event_queue(event_queue_t *q)
+bool eq_free(event_queue_t *q)
 {
     if (pthread_mutex_lock(&q->lock) != 0)
         return false;
@@ -420,8 +420,8 @@ static cancellation_status_t cancel_LH(event_queue_t *q, cancellable_id_t id,
     assert(false); // This should never ever happen; it's waiting but corrupted.
 }
 
-cancellation_status_t cancel(event_queue_t *q, cancellable_id_t id,
-                             void **event)
+cancellation_status_t eq_cancel(event_queue_t *q, cancellable_id_t id,
+                                void **event)
 {
     cancellation_status_t status;
 
@@ -436,8 +436,9 @@ cancellation_status_t cancel(event_queue_t *q, cancellable_id_t id,
     return status;
 }
 
-cancellation_status_t cancel_or_release(event_queue_t *q, cancellable_id_t id,
-                                        void **event)
+cancellation_status_t eq_cancel_or_release(event_queue_t *q,
+                                           cancellable_id_t id,
+                                           void **event)
 {
     cancellation_status_t status;
 
@@ -470,7 +471,7 @@ end:
     return status;
 }
 
-bool validate_heap(event_queue_t *q)
+bool eq_validate(event_queue_t *q)
 {
     bool status;
 
@@ -483,7 +484,7 @@ bool validate_heap(event_queue_t *q)
     return status;
 }
 
-cancellation_status_t release(event_queue_t *q, cancellable_id_t id)
+cancellation_status_t eq_release(event_queue_t *q, cancellable_id_t id)
 {
     cancellation_status_t status;
 

@@ -14,54 +14,54 @@ void test_fill_then_cancel_all(void)
     cancellable_id_t ids[COUNT];
     intptr_t e;
 
-    q = new_event_queue();
+    q = eq_new();
     assert(eq_empty(q));
-    assert(validate_heap(q));
+    assert(eq_validate(q));
 
     for (intptr_t i = 0; i < COUNT; i++)
     {
         ids[i] = eq_schedule(q, (void *)i, i*2);
         if (PARANOID)
-            assert(validate_heap(q));
+            assert(eq_validate(q));
         assert(ids[i] != NOT_CANCELLABLE);
         assert(!eq_empty(q));
-        assert(release(q, ids[i]) == FAIL_NOT_RUN);
+        assert(eq_release(q, ids[i]) == FAIL_NOT_RUN);
         if (PARANOID)
-            assert(validate_heap(q));
+            assert(eq_validate(q));
     }
 
-    assert(validate_heap(q));
+    assert(eq_validate(q));
     for (intptr_t i = COUNT - 1; i >= 0; i--)
     {
         assert(!eq_empty(q));
         if (i & 1)
         {
-            assert(cancel(q, ids[i], (void **)&e) == SUCCESS);
+            assert(eq_cancel(q, ids[i], (void **)&e) == SUCCESS);
             if (PARANOID)
-                assert(validate_heap(q));
+                assert(eq_validate(q));
             assert(e == i);
-            assert(cancel_or_release(q, ids[i],(void **)&e) == FAIL_NO_SUCH_ID);
+            assert(eq_cancel_or_release(q, ids[i],(void **)&e) == FAIL_NO_SUCH_ID);
             if (PARANOID)
-                assert(validate_heap(q));
+                assert(eq_validate(q));
             assert(e == (intptr_t)NULL);
         }
         else
         {
-            assert(cancel_or_release(q, ids[i], (void **)&e) == SUCCESS);
+            assert(eq_cancel_or_release(q, ids[i], (void **)&e) == SUCCESS);
             if (PARANOID)
-                assert(validate_heap(q));
+                assert(eq_validate(q));
             assert(e == i);
-            assert(cancel(q, ids[i], (void **)&e) == FAIL_NO_SUCH_ID);
+            assert(eq_cancel(q, ids[i], (void **)&e) == FAIL_NO_SUCH_ID);
             if (PARANOID)
-                assert(validate_heap(q));
+                assert(eq_validate(q));
             assert(e == (intptr_t)NULL);
         }
     }
 
-    assert(validate_heap(q));
+    assert(eq_validate(q));
     assert(eq_empty(q));
     assert(eq_next_event(q, 0) == NULL);
-    assert(free_event_queue(q));
+    assert(eq_free(q));
     q = NULL;
 }
 
@@ -71,20 +71,20 @@ void test_cancel_some_drain_some(void)
     cancellable_id_t ids[COUNT];
     void *e;
 
-    q = new_event_queue();
+    q = eq_new();
     assert(eq_empty(q));
-    assert(validate_heap(q));
+    assert(eq_validate(q));
 
     for (intptr_t i = COUNT - 1; i >= 0; i--)
     {
         ids[i] = eq_schedule(q, (void *)i, i*2);
         if (PARANOID)
-            assert(validate_heap(q));
+            assert(eq_validate(q));
         assert(ids[i] != NOT_CANCELLABLE);
         assert(!eq_empty(q));
-        assert(release(q, ids[i]) == FAIL_NOT_RUN);
+        assert(eq_release(q, ids[i]) == FAIL_NOT_RUN);
         if (PARANOID)
-            assert(validate_heap(q));
+            assert(eq_validate(q));
     }
 
     for (intptr_t i = 0; i < COUNT; i++)
@@ -94,36 +94,36 @@ void test_cancel_some_drain_some(void)
             assert(!eq_empty(q));
             e = eq_next_event(q, 1000);
             if (PARANOID)
-                assert(validate_heap(q));
+                assert(eq_validate(q));
             assert(e == (void *)i);
-            assert(cancel(q, ids[i], &e) == FAIL_ALREADY_RUN);
+            assert(eq_cancel(q, ids[i], &e) == FAIL_ALREADY_RUN);
             if (PARANOID)
-                assert(validate_heap(q));
+                assert(eq_validate(q));
             assert(e == NULL);
-            assert(release(q, ids[i]) == SUCCESS);
+            assert(eq_release(q, ids[i]) == SUCCESS);
             if (PARANOID)
-                assert(validate_heap(q));
+                assert(eq_validate(q));
         }
         else
         {
             assert(!eq_empty(q));
-            assert(cancel(q, ids[i], &e) == SUCCESS);
+            assert(eq_cancel(q, ids[i], &e) == SUCCESS);
             if (PARANOID)
-                assert(validate_heap(q));
+                assert(eq_validate(q));
             assert(e == (void *)i);
-            assert(cancel(q, ids[i], &e) == FAIL_NO_SUCH_ID);
+            assert(eq_cancel(q, ids[i], &e) == FAIL_NO_SUCH_ID);
             assert(e == NULL);
             e++;
-            assert(cancel_or_release(q, ids[i], &e) == FAIL_NO_SUCH_ID);
+            assert(eq_cancel_or_release(q, ids[i], &e) == FAIL_NO_SUCH_ID);
             assert(e == NULL);
             if (PARANOID)
-                assert(validate_heap(q));
+                assert(eq_validate(q));
         }
     }
 
     assert(eq_empty(q));
     assert(eq_next_event(q, 0) == NULL);
-    assert(free_event_queue(q));
+    assert(eq_free(q));
     q = NULL;
 }
 
@@ -133,20 +133,20 @@ void test_fill_then_drain_all(void)
     cancellable_id_t ids[COUNT];
     void *e;
 
-    q = new_event_queue();
+    q = eq_new();
     assert(eq_empty(q));
-    assert(validate_heap(q));
+    assert(eq_validate(q));
 
     for (intptr_t i = COUNT - 1; i >= 0; i--)
     {
         ids[i] = eq_schedule(q, (void *)i, i*2);
         if (PARANOID)
-            assert(validate_heap(q));
+            assert(eq_validate(q));
         assert(ids[i] != NOT_CANCELLABLE);
         assert(!eq_empty(q));
-        assert(release(q, ids[i]) == FAIL_NOT_RUN);
+        assert(eq_release(q, ids[i]) == FAIL_NOT_RUN);
         if (PARANOID)
-            assert(validate_heap(q));
+            assert(eq_validate(q));
     }
 
     for (intptr_t i = 0; i < COUNT; i++)
@@ -154,20 +154,20 @@ void test_fill_then_drain_all(void)
         assert(!eq_empty(q));
         e = eq_next_event(q, 1000);
         if (PARANOID)
-            assert(validate_heap(q));
+            assert(eq_validate(q));
         assert(e == (void *)i);
-        assert(cancel(q, ids[i], &e) == FAIL_ALREADY_RUN);
+        assert(eq_cancel(q, ids[i], &e) == FAIL_ALREADY_RUN);
         if (PARANOID)
-            assert(validate_heap(q));
+            assert(eq_validate(q));
         assert(e == NULL);
-        assert(release(q, ids[i]) == SUCCESS);
+        assert(eq_release(q, ids[i]) == SUCCESS);
         if (PARANOID)
-            assert(validate_heap(q));
+            assert(eq_validate(q));
     }
 
     assert(eq_empty(q));
-    assert(validate_heap(q));
-    assert(free_event_queue(q));
+    assert(eq_validate(q));
+    assert(eq_free(q));
     q = NULL;
 }
 
@@ -176,30 +176,30 @@ void test_not_cancellable(void)
     event_queue_t *q;
     void *e;
 
-    q = new_event_queue();
+    q = eq_new();
     assert(eq_empty(q));
-    assert(validate_heap(q));
+    assert(eq_validate(q));
 
     for (intptr_t i = 0; i < 0x10000; i++)
     {
         assert(eq_post(q, (void *)i, i));
         assert(!eq_empty(q));
         if (PARANOID)
-            assert(validate_heap(q));
+            assert(eq_validate(q));
     }
 
-    assert(validate_heap(q));
+    assert(eq_validate(q));
 
     for (intptr_t i = 0; i < 0x10000; i++)
     {
         e = eq_next_event(q, 0xffffffff);
         assert((intptr_t)e == i);
         if (PARANOID)
-            assert(validate_heap(q));
+            assert(eq_validate(q));
     }
     assert(eq_empty(q));
-    assert(validate_heap(q));
-    assert(free_event_queue(q));
+    assert(eq_validate(q));
+    assert(eq_free(q));
     q = NULL;
 }
 
@@ -255,7 +255,7 @@ void test_threads(void)
     cancellable_id_t *ids;
     void *e;
 
-    q = new_event_queue();
+    q = eq_new();
     assert(q != NULL);
     assert(eq_empty(q));
     pthread_attr_init(&attr);
@@ -271,7 +271,7 @@ void test_threads(void)
             while (eq_empty(q))
                 sched_yield();
             if (PARANOID)
-                assert(validate_heap(q));
+                assert(eq_validate(q));
             e = eq_next_event(q, i);
         } while (e == NULL);
 
@@ -287,7 +287,7 @@ void test_threads(void)
     {
         if (ids[i] == NOT_CANCELLABLE)
             continue;
-        assert(release(q, ids[i]) == SUCCESS);
+        assert(eq_release(q, ids[i]) == SUCCESS);
     }
     free(ids);
     ids = NULL;
@@ -298,12 +298,12 @@ void test_threads(void)
     {
         if (ids[i] == NOT_CANCELLABLE)
             continue;
-        assert(cancel_or_release(q, ids[i], &e) == SUCCESS);
+        assert(eq_cancel_or_release(q, ids[i], &e) == SUCCESS);
         assert(e == NULL);
     }
     free(ids);
     ids = NULL;
-    assert(free_event_queue(q));
+    assert(eq_free(q));
 }
 
 int main(void)

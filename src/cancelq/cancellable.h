@@ -15,10 +15,10 @@ typedef int cancellable_id_t;
 
 // Return a new event queue that will schedule and deliver events with
 // the eq functions below.
-event_queue_t *new_event_queue(void);
+event_queue_t *eq_new(void);
 
 // Frees an empty event queue. Fails if the queue is not empty.
-bool free_event_queue(event_queue_t *queue);
+bool eq_free(event_queue_t *queue);
 
 // Schedule a cancellable event to be delivered at the appointed
 // time. Returns an ID that can be used to cancel the event. The ID is
@@ -54,7 +54,7 @@ typedef enum
 // Cancel the given event ID. Fails if the event has already been
 // run. On success, e points to the cancelled event so that it can be
 // freed.
-cancellation_status_t cancel(event_queue_t *queue, cancellable_id_t id,
+cancellation_status_t eq_cancel(event_queue_t *queue, cancellable_id_t id,
                              void **e);
 
 // Cancel the given event ID if it's still in the queue. Otherwise
@@ -62,16 +62,16 @@ cancellation_status_t cancel(event_queue_t *queue, cancellable_id_t id,
 // event has run already. On success, e is set to the value held in
 // the cancelled event so that it can be freed, or NULL if it's
 // already been delivered.
-cancellation_status_t cancel_or_release(event_queue_t *queue,
+cancellation_status_t eq_cancel_or_release(event_queue_t *queue,
                                         cancellable_id_t id, void **e);
 
 // Release the resources associated with a cancellable event. Fails if
 // the event has not already been run.
-cancellation_status_t release(event_queue_t *queue, cancellable_id_t id);
+cancellation_status_t eq_release(event_queue_t *queue, cancellable_id_t id);
 
 // Check that the internal data structure is consistent. There should
 // be nothing you can do to make this return anything but true.
-bool validate_heap(event_queue_t *q);
+bool eq_validate(event_queue_t *q);
 
 // Return when the event queue is empty.
 void eq_wait_empty(event_queue_t *q);
