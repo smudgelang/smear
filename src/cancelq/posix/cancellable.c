@@ -2,6 +2,7 @@
 #include <string.h>
 #include <assert.h>
 #include <stdio.h>
+#include <inttypes.h>
 #include <pthread.h>
 
 #include "cancellable.h"
@@ -25,7 +26,7 @@ typedef struct
 {
     event_t event;
     cancellable_id_t id;
-    unsigned long long delivery_time;
+    abs_time_t delivery_time;
 } cancellable_t;
 
 typedef enum
@@ -78,7 +79,7 @@ UNUSED static void print_heap(event_queue_t *q)
     {
         if (is_pwr_of_2(idx))
             printf("\n");
-        printf(" %llu ", heap[idx].delivery_time);
+        printf(" %"PRIu64" ", heap[idx].delivery_time);
     }
     printf("\n");
 }
@@ -257,7 +258,7 @@ bool eq_free(event_queue_t *q)
 }
 
 cancellable_id_t eq_schedule(event_queue_t *q, const void *event,
-                             unsigned long long time)
+                             abs_time_t time)
 {
     cancellable_t *wrapper;
     cancellable_id_t id;
@@ -292,7 +293,7 @@ done:
     return id;
 }
 
-bool eq_post(event_queue_t *q, const void *event, unsigned long long time)
+bool eq_post(event_queue_t *q, const void *event, abs_time_t time)
 {
     cancellable_t *wrapper;
     bool success;
@@ -320,7 +321,7 @@ done:
     return success;
 }
 
-void *eq_next_event(event_queue_t *q, unsigned long long time)
+void *eq_next_event(event_queue_t *q, abs_time_t time)
 {
     cancellable_t *next;
     const void *event;

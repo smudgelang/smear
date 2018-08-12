@@ -3,6 +3,7 @@
 
 #include <stddef.h>
 #include <stdbool.h>
+#include <stdint.h>
 
 #define NOT_CANCELLABLE ((cancellable_id_t)-1)
 #define SCHEDULE_FAIL ((cancellable_id_t)-2)
@@ -12,6 +13,9 @@ typedef struct event_queue_s event_queue_t;
 
 // ID used to cancel cancellable_t
 typedef int cancellable_id_t;
+
+// Absolute time taken by schedule, post, and next.
+typedef uint64_t abs_time_t;
 
 // Return a new event queue that will schedule and deliver events with
 // the eq functions below.
@@ -25,13 +29,13 @@ bool eq_free(event_queue_t *queue);
 // a limited resource that should be released when it's no longer
 // needed.
 cancellable_id_t eq_schedule(event_queue_t *queue, const void *event,
-                             unsigned long long time);
+                             abs_time_t time);
 
 // Post an uncancellable event to the queue, to be delivered at time.
-bool eq_post(event_queue_t *queue, const void *event, unsigned long long time);
+bool eq_post(event_queue_t *queue, const void *event, abs_time_t time);
 
-// Returns the next scheduled event for the current time.
-void *eq_next_event(event_queue_t *queue, unsigned long long time);
+// Returns the next scheduled event for the provided time.
+void *eq_next_event(event_queue_t *queue, abs_time_t time);
 
 // Returns whether or not the queue has outstanding events.
 bool eq_empty(event_queue_t *queue);

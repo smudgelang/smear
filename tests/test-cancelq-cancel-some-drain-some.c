@@ -53,7 +53,7 @@ int main(void)
             assert(e == (void *)i);
             assert(eq_cancel(q, ids[i], &e) == FAIL_NO_SUCH_ID);
             assert(e == NULL);
-            e++;
+            e = (void *)((intptr_t)e + 1);
             assert(eq_cancel_or_release(q, ids[i], &e) == FAIL_NO_SUCH_ID);
             assert(e == NULL);
             if (PARANOID)

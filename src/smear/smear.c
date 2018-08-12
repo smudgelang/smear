@@ -8,7 +8,11 @@
 #include "smear.h"
 
 #define EXPORT_SYMBOL __attribute__((visibility ("default")))
+#ifdef __STRICT_ANSI__
+#define ERROR_MSG(msg) fprintf(stderr, "%s:%d - %s\n", __FILE__, __LINE__, msg)
+#else
 #define ERROR_MSG(msg) fprintf(stderr, "%s - %s\n", __FUNCTION__, msg)
+#endif
 
 #define NS_PER_MS 1000000
 
@@ -122,7 +126,7 @@ EXPORT_SYMBOL void SRT_send_message(const void *msg,
 
 EXPORT_SYMBOL cancel_token_t SRT_send_later(const void *msg,
                                             void (handler)(const void *),
-                                            uint64_t delay_ms)
+                                            time_delta_t delay_ms)
 {
     mq_msg_t *qmsg;
     cancellable_id_t id;
@@ -166,7 +170,7 @@ EXPORT_SYMBOL void SRT_run(void)
 
 EXPORT_SYMBOL void SRT_wait_for_idle(void)
 {
-    return eq_wait_empty(q);
+    eq_wait_empty(q);
 }
 
 EXPORT_SYMBOL void SRT_stop(void)

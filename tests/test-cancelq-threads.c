@@ -5,7 +5,7 @@
 #include <stdint.h>
 #include "cancellable.h"
 
-#define COUNT 32
+#define COUNT 32000
 #define PARANOID false
 
 static void *insert1(void *q)

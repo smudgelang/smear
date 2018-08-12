@@ -410,12 +410,12 @@ This uses the enter and exit events we just talked about to guarantee
 that the timer is limited in scope to the ``lockout`` state. All
 that's left is to implement the timers.
 
-Fortunately for us, Smear has support for cancellable timers. To use
-it, we call ``SRT_delayed_send()`` with the name of the state machine,
-the name of the event, a pointer to the event payload (NULL for now,
-explained later), and a delay in milliseconds. This function returns a
-``cancel_token_t``, which gets used later exactly once in a call
-to ``SRT_cancel``.
+Now we get to make use of the fact that Smear has support for
+cancellable timers. To use it, we call ``SRT_delayed_send()`` with the
+name of the state machine, the name of the event, a pointer to the
+event payload (NULL for now, explained later), and a delay in
+milliseconds. This function returns a ``cancel_token_t``, which gets
+used later exactly once in a call to ``SRT_cancel``.
 
 .. code-block:: c
    :include: 05_main.c
