@@ -48,6 +48,8 @@ libsmear.a: $(OBJ)
 
 obj/%.o: %.c
 	$(CC) $(CFLAGS) $(INCLUDE) $(LIBS) -c -o $@ $<
+	@echo $@
+	@cat $@
 
 clean:
 	rm -f obj/* *.a test-* *.dmp
