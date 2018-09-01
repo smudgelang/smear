@@ -3,11 +3,18 @@
 #include <stdio.h>
 #include <unistd.h>
 #include <pthread.h>
-
-#include "queue.h"
+#include "smeartime.h"
+#include "cancellable.h"
+#include "smear.h"
 
 #define EXPORT_SYMBOL __attribute__((visibility ("default")))
+#ifdef __STRICT_ANSI__
+#define ERROR_MSG(msg) fprintf(stderr, "%s:%d - %s\n", __FILE__, __LINE__, msg)
+#else
 #define ERROR_MSG(msg) fprintf(stderr, "%s - %s\n", __FUNCTION__, msg)
+#endif
+
+#define NS_PER_MS 1000000
 
 typedef void (*handler_t)(const void *);
 
@@ -17,7 +24,7 @@ typedef struct
     handler_t handler;
 } mq_msg_t;
 
-static queue_t *q;
+static event_queue_t *q;
 static pthread_t tid;
 
 /* The plan:
@@ -32,17 +39,13 @@ static pthread_t tid;
 
 static void flushEventQueue(void)
 {
-    bool success;
     mq_msg_t *qmsg;
 
-    while(size(q) > 0)
+    while(!eq_empty(q))
     {
-        success = dequeue(q, (const void **)&qmsg);
-        if (!success)
-        {
-            ERROR_MSG("Failed to dequeue element.");
-            exit(-1);
-        }
+        qmsg = eq_next_event(q, get_now_ns());
+        if (qmsg == NULL)
+            continue;
         qmsg->handler(qmsg->wrapper);
         free(qmsg);
     }
@@ -62,6 +65,27 @@ static void SRT_join(void)
 {
     void *rv;
     pthread_join(tid, &rv);
+}
+
+static mq_msg_t *getQMsg(const void *msg, void (handler)(const void *))
+{
+    mq_msg_t *qmsg;
+
+    if (msg == NULL)
+    {
+        ERROR_MSG("Null message sent.");
+        exit(-3);
+    }
+    qmsg = malloc(sizeof(mq_msg_t));
+    if (qmsg == NULL)
+    {
+        ERROR_MSG("Failed to allocate wrapper memory.");
+        exit(-2);
+    }
+    qmsg->wrapper = msg;
+    qmsg->handler = handler;
+
+    return qmsg;
 }
 
 EXPORT_SYMBOL void SMUDGE_debug_print(const char *fmt, const char *a1,
@@ -92,29 +116,47 @@ EXPORT_SYMBOL void SRT_send_message(const void *msg,
 {
     mq_msg_t *qmsg;
 
-    if (msg == NULL)
-    {
-        ERROR_MSG("Null message sent.");
-        exit(-3);
-    }
-    qmsg = malloc(sizeof(mq_msg_t));
-    if (qmsg == NULL)
-    {
-        ERROR_MSG("Failed to allocate wrapper memory.");
-        exit(-2);
-    }
-    qmsg->wrapper = msg;
-    qmsg->handler = handler;
-    if (!enqueue(q, qmsg))
+    qmsg = getQMsg(msg, handler);
+    if (!eq_post(q, qmsg, get_now_ns()))
     {
         ERROR_MSG("Failed to enqueue message.");
         exit(-2);
     }
 }
 
+EXPORT_SYMBOL cancel_token_t SRT_send_later(const void *msg,
+                                            void (handler)(const void *),
+                                            time_delta_t delay_ms)
+{
+    mq_msg_t *qmsg;
+    cancellable_id_t id;
+
+    qmsg = getQMsg(msg, handler);
+    id = eq_schedule(q, qmsg, get_now_ns() + delay_ms * NS_PER_MS);
+    if (id == NOT_CANCELLABLE || id == SCHEDULE_FAIL)
+    {
+        ERROR_MSG("Failed to schedule message.");
+        exit(-2);
+    }
+    return id;
+}
+
+EXPORT_SYMBOL void SRT_cancel(cancel_token_t id)
+{
+    mq_msg_t *qmsg;
+
+    if (eq_cancel_or_release(q, id, (void **)&qmsg) != SUCCESS)
+    {
+        ERROR_MSG("Failed to release event.");
+        exit(-4);
+    }
+    if (qmsg != NULL)
+        SMUDGE_free(qmsg);
+}
+
 EXPORT_SYMBOL void SRT_init(void)
 {
-    q = newq();
+    q = eq_new();
 }
 
 EXPORT_SYMBOL void SRT_run(void)
@@ -128,7 +170,7 @@ EXPORT_SYMBOL void SRT_run(void)
 
 EXPORT_SYMBOL void SRT_wait_for_idle(void)
 {
-    return wait_empty(q);
+    eq_wait_empty(q);
 }
 
 EXPORT_SYMBOL void SRT_stop(void)
@@ -136,5 +178,5 @@ EXPORT_SYMBOL void SRT_stop(void)
     void *rv;
     pthread_cancel(tid);
     pthread_join(tid, &rv);
-    freeq(q);
+    eq_free(q);
 }

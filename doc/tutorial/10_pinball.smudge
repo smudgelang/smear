@@ -1,4 +1,4 @@
-// 09_pinball.smudge
+// 10_pinball.smudge
 pinball
 {
    * power-on -(flippers.lock)-> idle,

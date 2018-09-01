@@ -17,6 +17,10 @@ GENERATED_EXTENSIONS=$(ALWAYS_GENERATED) _ext.c .gv .png .svg
 GENERATED_FILES=$(foreach x, $(GENERATED_EXTENSIONS), $(addsuffix $(x), $(SMUDGE_FILES)))
 GEN_DOC=$(foreach x, $(ALWAYS_GENERATED), $(addsuffix $(x), $(SMUDGE_FILES)))
 
+default: pinball-tutorial.pdf
+
+all: 00_pinball 01_pinball 02_pinball 03_pinball 04_pinball 05_pinball 06_pinball 07_pinball 08_pinball 09_pinball 10_pinball pinball-tutorial.pdf
+
 %.png %_ext.h %.c %.h: %.smudge
 	$(SMUDGE) $(SMUDGE_OPTIONS_PNG) $^
 

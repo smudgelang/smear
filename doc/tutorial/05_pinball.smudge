@@ -15,9 +15,13 @@ pinball
           drain -(@sadSound)-> idle,
           tilt --> lockout
      ] (@displayScore),
-     lockout (@displayError, @startTimer)
+     lockout(@displayError, @startTimer)
      [
           timerExpired --> idle,
-          _ --
-     ]
+          coin --,
+          plunger --,
+          target --,
+          drain --,
+          tilt --
+     ] (@cancelTimer)
 }

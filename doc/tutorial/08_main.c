@@ -8,42 +8,19 @@
 #include "08_pinball_ext.h"
 
 SRT_HANDLERS(pinball)
-SRT_HANDLERS(flippers)
 
 static int score;
 static int highScore;
-static timer_t tiltTimer;
-
-static void sendTimerExpired(union sigval unused)
-{
-    printf("Timer expiring.\n");
-    pinball_timerExpired(NULL);
-}
-
-static void setupTimer(void)
-{
-    struct sigevent sev;
-    sev.sigev_notify = SIGEV_THREAD;
-    sev.sigev_notify_function = sendTimerExpired;
-    sev.sigev_notify_attributes = NULL;
-    timer_create(CLOCK_MONOTONIC, &sev, &tiltTimer);
-}
-
-static void teardownTimer(void)
-{
-    if (timer_delete(tiltTimer) != 0)
-        perror("Failed to delete timer.");
-}
+static cancel_token_t timer;
 
 void startTimer(void)
 {
-    struct itimerspec delay;
+    timer = SRT_delayed_send(pinball, timerExpired, NULL, 2000);
+}
 
-    delay.it_value.tv_sec = 2;
-    delay.it_value.tv_nsec = 0;
-    delay.it_interval.tv_sec = 0;
-    delay.it_interval.tv_nsec = 0;
-    timer_settime(tiltTimer, 0, &delay, NULL);
+void cancelTimer(void)
+{
+    SRT_cancel(timer);
 }
 
 void rejectCoin(const pinball_coin_t *unused)
@@ -56,24 +33,9 @@ void displayError(void)
     printf("TILT!\n");
 }
 
-void flipLeft(const flippers_left_t *unused)
+void lockPaddles(void)
 {
-    printf("fLip");
-}
-
-void flipRight(const flippers_right_t *unused)
-{
-    printf("flipR");
-}
-
-void clickLock(void)
-{
-    printf("Locking flippers.\n");
-}
-
-void soundFree(void)
-{
-    printf("Flippers away!\n");
+    printf("Locking paddles.\n");
 }
 
 void sadSound(const pinball_drain_t *unused)
@@ -119,20 +81,14 @@ void startSound(void)
 
 int main(void)
 {
-    setupTimer();
     SRT_init();
     SRT_run();
 
     pinball_coin(NULL);
     pinball_plunger(NULL);
     pinball_coin(NULL);
-    SRT_wait_for_idle();
     for (int i = 0; i < 4; i++)
-    {
-        flippers_left(NULL);
         pinball_target(NULL);
-    }
-    flippers_right(NULL);
     pinball_drain(NULL);
 
     pinball_coin(NULL);
@@ -149,6 +105,5 @@ int main(void)
     sleep(3);
     
     SRT_stop();
-    teardownTimer();
     return 0;
 }

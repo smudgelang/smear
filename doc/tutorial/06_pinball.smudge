@@ -12,17 +12,12 @@ pinball
      run (@startSound)
      [
           target -(@incScore)-,
-          drain -(@sadSound)-> idle
+          drain -(@sadSound)-> idle,
+          tilt --> lockout
      ] (@displayScore),
      lockout (@displayError, @startTimer)
      [
           timerExpired --> idle,
-          tilt --,
           _ --
-     ],
-     _
-     [
-          tilt --> lockout,
-          coin -(@rejectCoin)-
-     ]
+     ] (@cancelTimer)
 }
