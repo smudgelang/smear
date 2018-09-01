@@ -4,7 +4,7 @@ MODULES := smear cancelq
 LIBS :=
 SRC := 
 CC := /usr/bin/gcc
-CFLAGS := -ggdb3 -std=c99 -Wall -Werror -Wextra -Wno-unused-parameter -Wno-unused-function -fvisibility=hidden -O3 -pedantic -E
+CFLAGS := -ggdb3 -std=c99 -Wall -Werror -Wextra -Wno-unused-parameter -Wno-unused-function -fvisibility=hidden -O3 -pedantic
 INCLUDE := -Iinclude $(foreach mod, $(MODULES), -Isrc/$(mod))
 VPATH := $(foreach mod, $(MODULES), src/$(mod)) include
 
@@ -48,8 +48,6 @@ libsmear.a: $(OBJ)
 
 obj/%.o: %.c
 	$(CC) $(CFLAGS) $(INCLUDE) $(LIBS) -c -o $@ $<
-	@echo $@
-	@cat $@
 
 clean:
 	rm -f obj/* *.a test-* *.dmp

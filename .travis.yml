@@ -1,8 +1,5 @@
 language: c
 compiler: gcc
 os: linux
-install:
-  - find /usr/include -iname time.h
-  - sudo apt-get update
-  - sudo apt-get -y install libc6-dev
+install: true
 script: make
