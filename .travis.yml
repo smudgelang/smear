@@ -2,5 +2,5 @@ language: c
 compiler: gcc
 os: linux
 install:
-  - sudo apt-get -y install linux-libc-dev
+  - sudo apt-get -y install libc6-dev
 script: make
