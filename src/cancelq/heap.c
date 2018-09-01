@@ -1,3 +1,4 @@
+#include "platform.h"
 // Include this .c file after defining heap_data_t.
 
 // Note that the heap_data_t must be a struct with an abs_time_t field
@@ -5,9 +6,7 @@
 
 typedef struct
 {
-    // Size includes the 1 empty slot at the beginning. We could play
-    // games with pointers to save that sizeof(cancellable_t)
-    // but...not until it's working.
+    // Size includes the 1 empty slot at the beginning.
     size_t memsize;
 
     // Index of the next element to be added to the heap.
@@ -112,6 +111,7 @@ static void reheap(heap_t *heap)
     last_idx = heap->nextidx;
     data = heap->data;
 
+    // Think about making this O(log n).
     for (size_t idx = 1; idx < last_idx; idx++)
     {
         if (left(idx) < last_idx &&

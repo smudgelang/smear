@@ -5,6 +5,7 @@
 #include <inttypes.h>
 #include <pthread.h>
 
+#include "platform.h"
 #include "cancellable.h"
 
 #ifndef HEAP_CHECK
@@ -13,8 +14,6 @@
 
 #define BASE_HEAP_SIZE 25
 #define INITIAL_ID_COUNT 16
-
-#define UNUSED __attribute__((unused))
 
 // Normal events that can't be cancelled
 typedef struct
