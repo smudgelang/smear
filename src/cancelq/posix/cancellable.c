@@ -7,7 +7,9 @@
 
 #include "cancellable.h"
 
+#ifndef HEAP_CHECK
 #define HEAP_CHECK true // Set to false to save oodles of execution time.
+#endif
 
 #define BASE_HEAP_SIZE 25
 #define INITIAL_ID_COUNT 16
