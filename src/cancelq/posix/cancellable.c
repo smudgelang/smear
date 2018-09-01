@@ -29,6 +29,9 @@ typedef struct
     abs_time_t delivery_time;
 } cancellable_t;
 
+typedef cancellable_t heap_data_t;
+#include "heap.c" // Note the .c
+
 typedef enum
 {
     ID_UNUSED = 0,
@@ -38,15 +41,7 @@ typedef enum
 
 struct event_queue_s
 {
-    // Size includes the 1 empty slot at the beginning. We could play
-    // games with pointers to save that sizeof(cancellable_t)
-    // but...not until it's working.
-    size_t heapsize;
-
-    // Index of the next element to be added to the heap.
-    size_t heapidx;
-    cancellable_t *minheap;
-
+    heap_t heap;
     // Current size of the array of IDs
     cancellable_id_t idsize;
 
@@ -57,31 +52,14 @@ struct event_queue_s
     pthread_cond_t empty;
 };
 
-UNUSED static bool is_pwr_of_2(size_t num)
+UNUSED static void print_queue(event_queue_t *q)
 {
-    if (num == 0)
-        return false;
-
-    while (num % 2 == 0)
-    {
-        num /= 2;
-    }
-    return num == 1;
+    print_heap(&q->heap);
 }
 
-UNUSED static void print_heap(event_queue_t *q)
+static bool empty_LH(const event_queue_t *q)
 {
-    cancellable_t *heap;
-
-    heap = q->minheap;
-
-    for (size_t idx = 1; idx < q->heapidx; idx++)
-    {
-        if (is_pwr_of_2(idx))
-            printf("\n");
-        printf(" %"PRIu64" ", heap[idx].delivery_time);
-    }
-    printf("\n");
+    return heap_empty(&q->heap);
 }
 
 static cancellable_id_t new_id(event_queue_t *q)
@@ -115,104 +93,9 @@ static cancellable_id_t new_id(event_queue_t *q)
     return id;
 }
 
-static size_t parent(size_t idx)
+static bool check_queue(const event_queue_t *q)
 {
-    return idx / 2; // floor division on purpose!
-}
-
-static size_t left(size_t idx)
-{
-    return idx * 2;
-}
-
-static size_t right(size_t idx)
-{
-    return idx * 2 + 1;
-}
-
-static void swap(cancellable_t *heap, size_t a, size_t b)
-{
-    cancellable_t temp;
-
-    memcpy(&temp, &heap[a], sizeof(temp));
-    memcpy(&heap[a], &heap[b], sizeof(temp));
-    memcpy(&heap[b], &temp, sizeof(temp));
-}
-
-static bool empty_LH(const event_queue_t *q)
-{
-    return q->heapidx == 1;
-}
-
-static bool check_heap(event_queue_t *q)
-{
-    cancellable_t *heap;
-
-    heap = q->minheap;
-    for (size_t i = 1; i < q->heapidx; i++)
-    {
-        if (left(i) >= q->heapidx)
-            continue;
-        if (heap[i].delivery_time > heap[left(i)].delivery_time)
-            return false;
-        if (right(i) >= q->heapidx)
-            continue;
-        if (heap[i].delivery_time > heap[right(i)].delivery_time)
-            return false;
-    }
-    return true;
-}
-
-static void postins_reheap(cancellable_t *heap, size_t idx)
-{
-    if (idx <= 1)
-        return;
-    if (heap[idx].delivery_time < heap[parent(idx)].delivery_time)
-    {
-        swap(heap, idx, parent(idx));
-        postins_reheap(heap, parent(idx));
-    }
-}
-
-static void reheap(cancellable_t *heap, size_t last_idx)
-{
-    for (size_t idx = 1; idx <= last_idx; idx++)
-    {
-        if (left(idx) <= last_idx &&
-            heap[idx].delivery_time > heap[left(idx)].delivery_time)
-        {
-            swap(heap, idx, left(idx));
-        }
-        if (right(idx) <= last_idx &&
-            heap[idx].delivery_time > heap[right(idx)].delivery_time)
-        {
-            swap(heap, idx, right(idx));
-        }
-    }
-}
-
-static bool grow_heap(event_queue_t *q)
-{
-    cancellable_t *new_heap;
-    size_t new_size;
-
-    new_size = q->heapsize * 2;
-    new_heap = realloc(q->minheap, new_size * sizeof(cancellable_t));
-    if (new_heap == NULL)
-        return false;
-    q->minheap = new_heap;
-    q->heapsize = new_size;
-    return true;
-}
-
-static void rm(event_queue_t *q, size_t idx)
-{
-    q->heapidx--;
-    swap(q->minheap, q->heapidx, idx);
-    reheap(q->minheap, q->heapidx - 1);
-    if (HEAP_CHECK)
-        assert(check_heap(q));
-    memset(&q->minheap[q->heapidx], 0, sizeof(q->minheap[q->heapidx]));
+    return check_heap(&q->heap);
 }
 
 event_queue_t *eq_new(void)
@@ -222,10 +105,14 @@ event_queue_t *eq_new(void)
     q = malloc(sizeof(*q));
     if (q == NULL)
         return q;
-    q->minheap = calloc(BASE_HEAP_SIZE, sizeof(*q->minheap));
-    q->heapsize = BASE_HEAP_SIZE;
-    q->heapidx = 1;
+    newheap(&q->heap, BASE_HEAP_SIZE);
     q->idsize = INITIAL_ID_COUNT;
+
+    if (!check_heap(&q->heap))
+    {
+        free(q);
+        return NULL;
+    }
 
     pthread_mutex_init(&q->lock, NULL);
     pthread_cond_init(&q->empty, NULL);
@@ -249,8 +136,7 @@ bool eq_free(event_queue_t *q)
     pthread_mutex_unlock(&q->lock);
     pthread_mutex_destroy(&q->lock);
 
-    free(q->minheap);
-    q->minheap = NULL;
+    heap_free(&q->heap);
     free(q->ids);
     q->ids = NULL;
     free(q);
@@ -260,29 +146,33 @@ bool eq_free(event_queue_t *q)
 cancellable_id_t eq_schedule(event_queue_t *q, const void *event,
                              abs_time_t time)
 {
-    cancellable_t *wrapper;
+    cancellable_t wrapper;
     cancellable_id_t id;
 
     id = SCHEDULE_FAIL;
     if (pthread_mutex_lock(&q->lock) != 0)
         goto done;
     
-    if (q->heapidx == q->heapsize && !grow_heap(q))
-        goto fail;
-
-    wrapper = &q->minheap[q->heapidx];
-    wrapper->event.event = event;
+    wrapper.event.event = event;
     id = new_id(q);
 
-    // id can be NOT_CANCELLABLE if the id allocation failed, but the
-    // event still gets scheduled.
-    
-    wrapper->id = id;
-    wrapper->delivery_time = time;
-    postins_reheap(q->minheap, q->heapidx);
-    q->heapidx++;
+    if (id == NOT_CANCELLABLE)
+    {
+        id = SCHEDULE_FAIL;
+        goto fail;
+    }
+
+    wrapper.id = id;
+    wrapper.delivery_time = time;
+    if (!heap_insert(&q->heap, &wrapper))
+    {
+        q->ids[id] = ID_UNUSED;
+        id = SCHEDULE_FAIL;
+        goto fail;
+    }
+
     if (HEAP_CHECK)
-        assert(check_heap(q));
+        assert(check_queue(q));
 
     if (empty_LH(q))
         pthread_cond_broadcast(&q->empty);
@@ -295,24 +185,21 @@ done:
 
 bool eq_post(event_queue_t *q, const void *event, abs_time_t time)
 {
-    cancellable_t *wrapper;
+    cancellable_t wrapper;
     bool success;
 
     success = false;
     if (pthread_mutex_lock(&q->lock) != 0)
         goto done;
 
-    if (q->heapidx == q->heapsize && !grow_heap(q))
+    wrapper.event.event = event;
+    wrapper.id = NOT_CANCELLABLE;
+    wrapper.delivery_time = time;
+    if (!heap_insert(&q->heap, &wrapper))
         goto fail;
 
-    wrapper = &q->minheap[q->heapidx];
-    wrapper->event.event = event;
-    wrapper->id = NOT_CANCELLABLE;
-    wrapper->delivery_time = time;
-    postins_reheap(q->minheap, q->heapidx);
-    q->heapidx++;
     if (HEAP_CHECK)
-        assert(check_heap(q));
+        assert(check_queue(q));
 
     success = true;
 fail:
@@ -330,13 +217,9 @@ void *eq_next_event(event_queue_t *q, abs_time_t time)
     next = NULL;
     if (pthread_mutex_lock(&q->lock) != 0)
         goto done;
-    
-    if (q->heapidx == 1) // Empty
-        goto fail;
 
-    next = &q->minheap[1];
-
-    if (next->delivery_time > time) // Not time yet
+    next = heap_peek(&q->heap, time);
+    if (next == NULL)
         goto fail;
 
     event = next->event.event;
@@ -345,7 +228,8 @@ void *eq_next_event(event_queue_t *q, abs_time_t time)
         assert(q->ids[next->id] == ID_WAITING);
         q->ids[next->id] = ID_DELIVERED;
     }
-    rm(q, 1);
+
+    heap_rm(&q->heap, 1);
     if (empty_LH(q))
         pthread_cond_broadcast(&q->empty);
 
@@ -408,12 +292,14 @@ static cancellation_status_t cancel_LH(event_queue_t *q, cancellable_id_t id,
         return FAIL_ALREADY_RUN;
     }
 
-    for (idx = 1; idx < q->heapidx; idx++)
+    // This is pretty deep into the heap's data structure, but heaps
+    // don't do this.
+    for (idx = 1; idx < q->heap.nextidx; idx++)
     {
-        if (q->minheap[idx].id == id)
+        if (q->heap.data[idx].id == id)
         {
-            *event = (void *)q->minheap[idx].event.event;
-            rm(q, idx);
+            *event = (void *)q->heap.data[idx].event.event;
+            heap_rm(&q->heap, idx);
             q->ids[id] = ID_UNUSED;
             return SUCCESS;
         }
@@ -479,7 +365,7 @@ bool eq_validate(event_queue_t *q)
     status = false;
     if (pthread_mutex_lock(&q->lock) == 0)
     {
-        status = check_heap(q);
+        status = check_queue(q);
         pthread_mutex_unlock(&q->lock);
     }
     return status;
