@@ -3,6 +3,5 @@ compiler: gcc
 os: linux
 install:
   - sudo apt-get update
-  - sudo apt-get -y upgrade
   - sudo apt-get -y install libc6-dev
 script: make
