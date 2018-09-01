@@ -77,7 +77,7 @@ static bool check_heap(const heap_t *heap)
     data = heap->data;
     if (data == NULL)
         return false;
-    
+
     for (size_t i = 1; i < size; i++)
     {
         if (left(i) >= size)
@@ -184,7 +184,7 @@ static bool heap_insert(heap_t *heap, heap_data_t *data)
 
     if (heap->nextidx == heap->memsize && !heap_grow(heap))
         return false;
-    
+
     dest = &heap->data[heap->nextidx];
     memcpy(dest, data, sizeof(*data));
     postins_reheap(heap, heap->nextidx);

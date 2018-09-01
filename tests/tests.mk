@@ -13,8 +13,8 @@ test-queue: test-queue.c obj/queue.o
 .PHONY: runtests
 runtests: tests
 	@echo straight
-	@for t in test-* ; do echo $$t ; ./$$t || break ; done
+	@for t in test-* ; do echo $$t ; ./$$t || exit 1 ; done
 	@echo memcheck
-	@for t in test-* ; do echo $$t ; valgrind --tool=memcheck ./$$t || break ; done
+	@for t in test-* ; do echo $$t ; valgrind --error-exitcode=1 --tool=memcheck ./$$t || exit 1 ; done
 	@echo helgrind
-	@for t in test-* ; do echo $$t ; valgrind --tool=helgrind ./$$t || break ; done
+	@for t in test-* ; do echo $$t ; valgrind --error-exitcode=1 --tool=helgrind ./$$t || exit 1 ; done

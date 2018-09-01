@@ -134,12 +134,15 @@ bool eq_free(event_queue_t *q)
         return false;
     }
 
+    heap_free(&q->heap);
+    memset(q->ids, 0, q->idsize * sizeof(q->ids[0]));
+    free(q->ids);
+    q->ids = NULL;
+
     pthread_mutex_unlock(&q->lock);
     pthread_mutex_destroy(&q->lock);
 
-    heap_free(&q->heap);
-    free(q->ids);
-    q->ids = NULL;
+    memset(&q, 0, sizeof(q));
     free(q);
     return true;
 }
@@ -153,7 +156,7 @@ cancellable_id_t eq_schedule(event_queue_t *q, const void *event,
     id = SCHEDULE_FAIL;
     if (pthread_mutex_lock(&q->lock) != 0)
         goto done;
-    
+
     wrapper.event.event = event;
     id = new_id(q);
 
@@ -174,9 +177,6 @@ cancellable_id_t eq_schedule(event_queue_t *q, const void *event,
 
     if (HEAP_CHECK)
         assert(check_queue(q));
-
-    if (empty_LH(q))
-        pthread_cond_broadcast(&q->empty);
 
 fail:
     pthread_mutex_unlock(&q->lock);
