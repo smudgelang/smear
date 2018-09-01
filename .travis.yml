@@ -2,7 +2,7 @@ language: c
 compiler: gcc
 os: linux
 install:
-  - cat /usr/include/time.h
+  - find /usr/include -iname time.h
   - sudo apt-get update
   - sudo apt-get -y install libc6-dev
 script: make

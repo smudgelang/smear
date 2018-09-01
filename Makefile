@@ -4,7 +4,7 @@ MODULES := smear cancelq
 LIBS :=
 SRC := 
 CC := /usr/bin/gcc
-CFLAGS := -ggdb3 -std=c99 -Wall -Werror -Wextra -Wno-unused-parameter -Wno-unused-function -fvisibility=hidden -O3 -pedantic
+CFLAGS := -ggdb3 -std=c99 -Wall -Werror -Wextra -Wno-unused-parameter -Wno-unused-function -fvisibility=hidden -O3 -pedantic -E
 INCLUDE := -Iinclude $(foreach mod, $(MODULES), -Isrc/$(mod))
 VPATH := $(foreach mod, $(MODULES), src/$(mod)) include
 
