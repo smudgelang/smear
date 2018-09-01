@@ -1,4 +1,6 @@
 language: c
 compiler: gcc
 os: linux
+install:
+  - sudo apt-get -y install linux-libc-dev
 script: make
