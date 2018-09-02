@@ -14,7 +14,7 @@ int main(void)
     assert(eq_empty(q));
     assert(eq_validate(q));
 
-    for (intptr_t i = 0; i < 0x10000; i++)
+    for (intptr_t i = 0; i < 0x1000; i++)
     {
         assert(eq_post(q, (void *)i, i));
         assert(!eq_empty(q));
@@ -24,7 +24,7 @@ int main(void)
 
     assert(eq_validate(q));
 
-    for (intptr_t i = 0; i < 0x10000; i++)
+    for (intptr_t i = 0; i < 0x1000; i++)
     {
         e = eq_next_event(q, 0xffffffff);
         assert((intptr_t)e == i);

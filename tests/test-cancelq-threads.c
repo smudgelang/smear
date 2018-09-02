@@ -3,9 +3,10 @@
 #include <sched.h>
 #include <assert.h>
 #include <stdint.h>
+#include <stdio.h>
 #include "cancellable.h"
 
-#define COUNT 32000
+#define COUNT 3200
 #define PARANOID false
 
 static void *insert1(void *q)
@@ -82,6 +83,8 @@ static void test_threads(void)
             e = eq_next_event(q, i);
         } while (e == NULL);
 
+        if ((i & 0xff) == 0)
+            printf("Tick %ld\n", i);
         assert(e == (void *)i);
     }
 
