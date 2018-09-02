@@ -2,4 +2,10 @@ language: c
 compiler: gcc
 os: linux
 install: true
-script: make
+jobs:
+  include:
+    - stage build:
+        script: make
+    - stage test:
+        script: make runtests
+        
