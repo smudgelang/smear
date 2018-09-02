@@ -1,3 +1,5 @@
+[![Build Status](https://travis-ci.com/smudgelang/smear.svg?branch=master)](https://travis-ci.com/smudgelang/smear)
+
 Smear is a runtime environment for the Smudge state machine
 programming language.
 
