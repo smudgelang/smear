@@ -3,4 +3,4 @@ compiler: gcc
 os: linux
 sudo: false
 install: sudo apt-get -y install valgrind
-script: make runtests
+script: make all runtests
