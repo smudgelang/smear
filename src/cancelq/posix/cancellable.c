@@ -142,7 +142,7 @@ bool eq_free(event_queue_t *q)
     pthread_mutex_unlock(&q->lock);
     pthread_mutex_destroy(&q->lock);
 
-    memset(&q, 0, sizeof(q));
+    memset(q, 0, sizeof(*q));
     free(q);
     return true;
 }
