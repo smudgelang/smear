@@ -1,6 +1,6 @@
 language: c
 compiler: gcc
 os: linux
-install: true
 sudo: false
+install: sudo apt-get -y install valgrind
 script: make runtests
