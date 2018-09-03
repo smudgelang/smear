@@ -2,4 +2,5 @@ before_build:
   - set PATH=%CD%\.local\bin;C:\MinGW\bin;C:\Program Files\Git\mingw64\bin;%PATH%
 
 build_script:
+  - mingw32-make debug
   - mingw32-make all
