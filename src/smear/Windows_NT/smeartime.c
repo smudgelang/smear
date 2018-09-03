@@ -2,7 +2,7 @@
 #include <Winbase.h>
 #include "smeartime.h"
 
-#define NANOSECONDS_PER_MILLISECOND 1000
+#define NANOSECONDS_PER_MILLISECOND 1000000
 
 uint64_t get_now_ns(void)
 {
