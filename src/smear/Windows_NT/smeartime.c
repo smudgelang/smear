@@ -8,6 +8,6 @@ uint64_t get_now_ns(void)
 {
     uint64_t now;
 
-    now = GetTickCount64();
+    now = GetTickCount(); // Overflows pretty fast.
     return now * NANOSECONDS_PER_MILLISECOND;
 }

@@ -1,9 +1,6 @@
 environment:
   APPVEYOR_RDP_PASSWORD: notverysecret-butp0licy!
 
-init:
-  - ps: iex ((new-object net.webclient).DownloadString('https://raw.githubusercontent.com/appveyor/ci/master/scripts/enable-rdp.ps1'))
-
 before_build:
   - set PATH=%CD%\.local\bin;C:\mingw-w64\x86_64-7.3.0-posix-seh-rt_v5-rev0\mingw64\bin;C:\Program Files\Git\mingw64\bin;%PATH%
 
