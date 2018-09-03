@@ -5,11 +5,11 @@ init:
   - ps: iex ((new-object net.webclient).DownloadString('https://raw.githubusercontent.com/appveyor/ci/master/scripts/enable-rdp.ps1'))
 
 before_build:
-  - set PATH=%CD%\.local\bin;C:\MinGW\bin;C:\Program Files\Git\mingw64\bin;%PATH%
+  - set PATH=%CD%\.local\bin;C:\mingw-w64\x86_64-7.3.0-posix-seh-rt_v5-rev0\mingw64\bin;C:\Program Files\Git\mingw64\bin;%PATH%
 
 build_script:
-  - mingw-make debug
-  - mingw-make all
+  - mingw32-make debug
+  - mingw32-make all
 
 on_finish:
   - ps: $blockRdp = $true; iex ((new-object net.webclient).DownloadString('https://raw.githubusercontent.com/appveyor/ci/master/scripts/enable-rdp.ps1'))
