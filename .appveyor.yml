@@ -1,0 +1,2 @@
+test_script:
+  - mingw32-make all
