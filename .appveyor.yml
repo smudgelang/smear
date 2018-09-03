@@ -1,5 +1,5 @@
 environment:
-  APPVEYOR_RDP_PASSWORD: notverysecret
+  APPVEYOR_RDP_PASSWORD: notverysecret-butp0licy!
 
 init:
   - ps: iex ((new-object net.webclient).DownloadString('https://raw.githubusercontent.com/appveyor/ci/master/scripts/enable-rdp.ps1'))
@@ -10,3 +10,6 @@ before_build:
 build_script:
   - mingw-make debug
   - mingw-make all
+
+on_finish:
+  - ps: $blockRdp = $true; iex ((new-object net.webclient).DownloadString('https://raw.githubusercontent.com/appveyor/ci/master/scripts/enable-rdp.ps1'))
