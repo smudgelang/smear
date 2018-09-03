@@ -306,6 +306,7 @@ static cancellation_status_t cancel_LH(event_queue_t *q, cancellable_id_t id,
         }
     }
     assert(false); // This should never ever happen; it's waiting but corrupted.
+    return FAIL_NO_SUCH_ID; // Appease compilers that don't know about assert.
 }
 
 cancellation_status_t eq_cancel(event_queue_t *q, cancellable_id_t id,
