@@ -1,2 +1,2 @@
-test_script:
+build_script:
   - mingw32-make all
