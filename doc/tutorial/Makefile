@@ -12,10 +12,14 @@ LPATH=-L$(SMEAR_ROOT)
 IPATH=-I$(SMEAR_ROOT)/include
 
 SMUDGE_FILES=$(basename $(wildcard *.smudge))
+TEST_LOGS=$(foreach x, $(SMUDGE_FILES), $(x).log)
+TEST_TARGETS=$(foreach x, $(SMUDGE_FILES), $(x)-test)
 ALWAYS_GENERATED=.h .c _ext.h
 GENERATED_EXTENSIONS=$(ALWAYS_GENERATED) _ext.c .gv .png .svg
 GENERATED_FILES=$(foreach x, $(GENERATED_EXTENSIONS), $(addsuffix $(x), $(SMUDGE_FILES)))
 GEN_DOC=$(foreach x, $(ALWAYS_GENERATED), $(addsuffix $(x), $(SMUDGE_FILES)))
+
+.PHONY: clean all default check
 
 default: pinball-tutorial.pdf
 
@@ -27,13 +31,22 @@ all: 00_pinball 01_pinball 02_pinball 03_pinball 04_pinball 05_pinball 06_pinbal
 pinball-tutorial.pdf: pinball-tutorial.rst 00_pinball.png *_main.c *.smudge $(GEN_DOC)
 	rst2pdf $<
 
+%.log: %
+	./$< > $@ 2>&1 || true
+
+%_pinball-test: %_pinball.log
+	diff -q $< $<.golden
+
+check: $(TEST_TARGETS)
+
+%_main.o: %_main.c %_pinball.h
+	$(CC) $(CFLAGS) $(IPATH) -c -o $@ $<
+
 %.o: %.c
-	$(CC) $(CFLAGS) $(IPATH) -c -o $@ $^
+	$(CC) $(CFLAGS) $(IPATH) -c -o $@ $<
 
 %_pinball: %_pinball.o %_main.o %_pinball.h %_pinball_ext.h
 	$(CC) $(LPATH) -o $@ $(filter %.o, $^) $(LFLAGS)
 
-.PHONY: clean
-
 clean:
-	rm -f $(GENERATED_FILES) *.o *_pinball *.pdf
+	rm -f $(GENERATED_FILES) *.o *_pinball *.pdf *.log
