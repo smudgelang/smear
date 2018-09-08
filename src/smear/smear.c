@@ -57,10 +57,9 @@ static void *mainloop(void *unused)
 {
     while (true)
     {
+        sem_post(&idle_sem);
         sem_wait(&idle_sem);
         flushEventQueue();
-        sem_post(&idle_sem);
-        sleep(0);
     }
     return NULL;
 }
@@ -161,7 +160,7 @@ EXPORT_SYMBOL void SRT_cancel(cancel_token_t id)
 EXPORT_SYMBOL void SRT_init(void)
 {
     q = eq_new();
-    sem_init(&idle_sem, 0, 1);
+    sem_init(&idle_sem, 0, 0);
 }
 
 EXPORT_SYMBOL void SRT_run(void)
@@ -176,7 +175,6 @@ EXPORT_SYMBOL void SRT_run(void)
 EXPORT_SYMBOL void SRT_wait_for_idle(void)
 {
     sem_wait(&idle_sem);
-    flushEventQueue();
     sem_post(&idle_sem);
     return;
 }
