@@ -57,9 +57,9 @@ static void *mainloop(void *unused)
 {
     while (true)
     {
+        flushEventQueue();
         sem_post(&idle_sem);
         sem_wait(&idle_sem);
-        flushEventQueue();
     }
     return NULL;
 }
