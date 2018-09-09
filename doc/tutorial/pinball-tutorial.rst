@@ -226,7 +226,7 @@ Error Handling
 --------------
 
 If we add a call to ``pinball_drain(NULL)`` before the last
-``SRT_wait_for_idle()`` call in **01_main.c** (on line 33), we get
+``SRT_wait_for_idle()`` call in **01_main.c** (on line 37), we get
 **02_main.c**.  Since the *drain* event is not handled when the
 *pinball* machine is in the *idle* state, this generates an error and
 returns early:
@@ -330,8 +330,8 @@ Running this new program gives us the expected
    like ``prepare-ball``. The ``Current_state_name`` for your state
    machine will always return the real name.
 
-Enter/Exit Functions
---------------------
+Enter/Exit Effects
+------------------
 
 So now we can have side effects, that's cool. They also give us a
 reason to be in different states, since we can react to the same event
@@ -433,6 +433,14 @@ used.
 This way, we can ignore all of the player's events for a little while
 to give them some time to think about whether or not cheating at
 pinball is a winning strategy for life.
+
+One more thing: Up to now, we've been calling ``SRT_wait_for_idle()``
+to drain the events out of the machine. Since that function is
+designed to be used in a mainloop, it doesn't wait for timers to
+expire before returning. That's useful in a lot of situations, but
+here we actually do want to just sit around doing nothing in ``main``
+until all the events have been handled. That's what
+``SRT_wait_for_empty()`` does in **05_main.c** on line 142.
 
 Default Handlers
 ================
@@ -573,7 +581,7 @@ program that uses everything we've seen so far:
    :include: 09_main.c
    :linenos:
 
-Note the ``SRT_wait_for_idle`` call on line 123. It's there because we
+Note the ``SRT_wait_for_idle`` call on line 125. It's there because we
 have state machines sending messages around to each other so we can't
 just queue up all our events and let loose.
 

@@ -1,0 +1,10 @@
+pinball[idle]: Unhandled event "drain"
+Sending coin event.
+Starting runtime.
+Current state: idle
+Waiting for events to be handled.
+Current state: run
+Sending drain event.
+Current state: run
+Waiting for events to be handled.
+Current state: idle

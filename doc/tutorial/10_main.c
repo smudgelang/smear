@@ -139,9 +139,7 @@ int main(void)
     pinball_target(newTarget(1000));
     pinball_drain(NULL);
 
-    SRT_wait_for_idle();
-    sleep(3);
-    SRT_wait_for_idle();
+    SRT_wait_for_empty();
     
     SRT_stop();
     return 0;

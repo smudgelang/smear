@@ -75,8 +75,14 @@ void SRT_run(void);
  * resources. */
 void SRT_stop(void);
 
-/* Block until there are no pending events, then return. */
+/* Block until there are no pending events, then return. Do not call
+ * this from within an event handler. It will deadlock. */
 void SRT_wait_for_idle(void);
+
+/* Block until there are no events left in the queue, including
+ * delayed events, then return. Do not call this from within an event
+ * handler. It will deadlock. */
+void SRT_wait_for_empty(void);
 
 /* Don't call this directly. */
 void SRT_send_message(const void *msg, void (handler)(const void *));

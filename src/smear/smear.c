@@ -3,6 +3,7 @@
 #include <stdio.h>
 #include <unistd.h>
 #include <pthread.h>
+#include <semaphore.h>
 #include "smeartime.h"
 #include "cancellable.h"
 #include "smear.h"
@@ -26,6 +27,7 @@ typedef struct
 
 static event_queue_t *q;
 static pthread_t tid;
+static sem_t idle_sem;
 
 /* The plan:
  *
@@ -41,11 +43,11 @@ static void flushEventQueue(void)
 {
     mq_msg_t *qmsg;
 
-    while(!eq_empty(q))
+    while (true)
     {
         qmsg = eq_next_event(q, get_now_ns());
         if (qmsg == NULL)
-            continue;
+            break;
         qmsg->handler(qmsg->wrapper);
         free(qmsg);
     }
@@ -56,7 +58,8 @@ static void *mainloop(void *unused)
     while (true)
     {
         flushEventQueue();
-        sleep(0);
+        sem_post(&idle_sem);
+        sem_wait(&idle_sem);
     }
     return NULL;
 }
@@ -157,6 +160,7 @@ EXPORT_SYMBOL void SRT_cancel(cancel_token_t id)
 EXPORT_SYMBOL void SRT_init(void)
 {
     q = eq_new();
+    sem_init(&idle_sem, 0, 0);
 }
 
 EXPORT_SYMBOL void SRT_run(void)
@@ -170,6 +174,13 @@ EXPORT_SYMBOL void SRT_run(void)
 
 EXPORT_SYMBOL void SRT_wait_for_idle(void)
 {
+    sem_wait(&idle_sem);
+    sem_post(&idle_sem);
+    return;
+}
+
+EXPORT_SYMBOL void SRT_wait_for_empty(void)
+{
     eq_wait_empty(q);
 }
 
@@ -179,4 +190,5 @@ EXPORT_SYMBOL void SRT_stop(void)
     pthread_cancel(tid);
     pthread_join(tid, &rv);
     eq_free(q);
+    sem_destroy(&idle_sem);
 }
