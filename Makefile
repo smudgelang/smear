@@ -1,6 +1,6 @@
 OBJDIR := obj
 SRCDIR := src
-MODULES := smear cancelq
+MODULES := smear cancelq number
 LIBS :=
 SRC := 
 CC := /usr/bin/gcc
