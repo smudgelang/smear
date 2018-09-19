@@ -1,0 +1,15 @@
+# To enable RDP, uncomment the environment and on_finish lines, then run
+# xfreerdp /p:notverysecret-butp0licy! /u:appveyor /v:<ip>:<port>
+
+#environment:
+#  APPVEYOR_RDP_PASSWORD: notverysecret-butp0licy!
+#on_finish:
+#  - ps: $blockRdp = $true; iex ((new-object net.webclient).DownloadString('https://raw.githubusercontent.com/appveyor/ci/master/scripts/enable-rdp.ps1'))
+
+before_build:
+  - set PATH=%CD%\.local\bin;C:\mingw-w64\x86_64-7.3.0-posix-seh-rt_v5-rev0\mingw64\bin;C:\Program Files\Git\mingw64\bin;%PATH%
+
+build_script:
+  - mingw32-make debug
+  - mingw32-make all
+
