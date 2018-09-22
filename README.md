@@ -1,4 +1,5 @@
-[![Build Status](https://travis-ci.com/smudgelang/smear.svg?branch=master)](https://travis-ci.com/smudgelang/smear)
+[![Linux Build Status](https://img.shields.io/travis/com/smudgelang/smear.svg?label=Linux%20build)](https://travis-ci.com/smudgelang/smear)
+[![Windows Build Status](https://ci.appveyor.com/api/projects/status/90erphta52bs2w9h/branch/master?svg=true&pendingText=Windows%20Build%3A%20pending&passingText=Windows%20Build%3A%20passing&failingText=Windows%20Build%3A%20failing)](https://ci.appveyor.com/project/smudgelang/smear/branch/master)
 
 Smear is a runtime environment for the Smudge state machine
 programming language.
