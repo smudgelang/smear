@@ -1,12 +1,27 @@
 [![Linux Build Status](https://img.shields.io/travis/com/smudgelang/smear.svg?label=Linux%20build&branch=master)](https://travis-ci.com/smudgelang/smear)
 [![Windows Build Status](https://img.shields.io/appveyor/ci/smudgelang/smear.svg?label=Windows%20Build&branch=master)](https://ci.appveyor.com/project/smudgelang/smear)
 
-Smear is a runtime environment for the Smudge state machine
-programming language.
+# The Smear Library
+
+Smear is the SMudge Environment And Runtime, a standard library for
+the Smudge state machine programming language.
+
+## Using Smear
+
+### Building and Linking
 
 To use this package in your own Smudge projects, build "libsmear.a"
 and put it in your library include path. Then link your code with
 "-lsmear -pthread". Also put "smear.h" somewhere in your include path.
+
+### Autogenerate Smear Bindings
+
+To get Smudge to generate bindings directly to smear for your project,
+along with a minimal `main`, run:
+
+    $ smudge --c-smear --c-stubs machine.smudge
+
+### Manual Smear Bindings
 
 Smear implements all the functions whose names start with "SMUDGE_",
 and has handy macros for generating your event handlers. Put this in
