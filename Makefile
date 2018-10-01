@@ -28,7 +28,7 @@ debug:
 	@echo os $(OS)
 	@echo vpath $(VPATH)
 
-all: libsmear.a libsmear.dmp tests
+all: libsmear.a libsmear.dmp tests obj/libsmear.a
 
 
 -include $(OBJ:.o=.d)
@@ -46,8 +46,22 @@ libsmear.a: $(OBJ)
 	$(LD) -r -o $@ $^
 	objcopy --localize-hidden $@
 
+obj/libsmear.a: libsmear.a
+	strip -o $@ $<
+
 obj/%.o: %.c
 	$(CC) $(CFLAGS) $(INCLUDE) $(LIBS) -c -o $@ $<
 
+libsmear-dev%.deb: libsmear.a
+	debuild -i --no-sign -b
+	mv ../libsmear-dev_*.deb .
+	mv ../libsmear_*_*.build .
+	mv ../libsmear_*_*.buildinfo .
+	mv ../libsmear_*_*.changes .
+
 clean:
-	rm -f obj/* *.a test-* *.dmp
+	rm -rf debian/libsmear-dev
+	rm -rf debian/.debhelper
+	rm -f obj/* *.a test-* *.dmp *.deb *.build *.buildinfo *.changes
+	rm -f debian/files debian/libsmear-dev.substvars
+	rm -f debian/debhelper-build-stamp
