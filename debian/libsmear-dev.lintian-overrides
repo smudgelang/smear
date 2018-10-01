@@ -1,0 +1,4 @@
+# In the dev package, including debug symbols in the binary is
+# handy. It's statically linked, so users who want to strip it still
+# can after linking.
+libsmear-dev: unstripped-binary-or-object usr/lib/x86_64-linux-gnu/libsmear.a

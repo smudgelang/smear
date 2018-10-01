@@ -1,0 +1,2 @@
+include/*.h usr/include/
+libsmear.a usr/lib/x86_64-linux-gnu/
