@@ -1,0 +1,5 @@
+v0.1: First release.  Provides a complete, albeit spartan, runtime
+      and standard library for Smudge.  Implements all "SMUDGE_*"
+      functions, and exposes an interface to control the runtime,
+      including starting, stopping, sending messages, waiting for
+      termination, and launching cancellable timers.
