@@ -16,7 +16,7 @@ OBJ := $(SRC:%.c=$(OBJDIR)/%.o)
 
 LIBS := $(sort $(LIBS))
 
-.PHONY: clean default all tests
+.PHONY: clean default all tests package
 
 
 debug:
@@ -28,7 +28,7 @@ debug:
 	@echo os $(OS)
 	@echo vpath $(VPATH)
 
-all: libsmear.a libsmear.dmp tests obj/libsmear.a
+all: libsmear.a libsmear.dmp tests obj/libsmear.a package
 
 
 -include $(OBJ:.o=.d)

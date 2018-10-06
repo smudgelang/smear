@@ -1,7 +1,7 @@
 Source: libsmear
 Priority: optional
 Maintainer: smudgelang project <nmichaels@gmail.com>
-Build-Depends: debhelper (>= 11)
+Build-Depends: debhelper (>= 9)
 Standards-Version: 4.1.3
 Section: libs
 Homepage: https://github.com/smudgelang/smear
