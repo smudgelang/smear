@@ -1,2 +1,2 @@
-include/*.h usr/include/
+include/smear/*.h usr/include/smear/
 libsmear.a usr/lib/x86_64-linux-gnu/
