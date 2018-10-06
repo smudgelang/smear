@@ -2,12 +2,15 @@ language: c
 compiler: gcc
 os: linux
 dist: trusty
-sudo: false
+sudo: required
 addons:
   apt:
     packages:
       valgrind
       devscripts
-      debhelper
       fakeroot
+      debhelper
+before-install:
+- sudo add-apt-repository ppa:ondrej/debhelper
+- sudo apt-get -qq update
 script: make all runtests
