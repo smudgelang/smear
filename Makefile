@@ -1,3 +1,10 @@
+ifeq ($(OS),Windows_NT)
+PKGEXT=zip
+PLATFORM=windows
+else
+PKGEXT=deb
+PLATFORM=$(shell dpkg --print-architecture)
+endif
 OBJDIR := obj
 SRCDIR := src
 MODULES := smear cancelq number
@@ -7,6 +14,9 @@ CC := gcc
 CFLAGS := -ggdb3 -std=c99 -Wall -Werror -Wextra -Wno-unused-parameter -Wno-unused-function -fvisibility=hidden -O3 -pedantic
 INCLUDE := -Iinclude $(foreach mod, $(MODULES), -Isrc/$(mod))
 VPATH := $(foreach mod, $(MODULES), src/$(mod)) include
+SMEAR_RELEASE_SUBDIR=smear
+SMEAR_RELEASE_STAGE_DIR=$(OBJDIR)/$(SMEAR_RELEASE_SUBDIR)
+SMEAR_VERSION=$(shell grep "\bSMEAR_VERSION\b" include/smear/version.h | cut -f 2 -d '"')
 
 default: all
 
@@ -16,7 +26,8 @@ OBJ := $(SRC:%.c=$(OBJDIR)/%.o)
 
 LIBS := $(sort $(LIBS))
 
-.PHONY: clean default all tests
+.PHONY: clean default all tests \
+        package zip deb
 
 
 debug:
@@ -52,7 +63,28 @@ obj/libsmear.a: libsmear.a
 obj/%.o: %.c
 	$(CC) $(CFLAGS) $(INCLUDE) $(LIBS) -c -o $@ $<
 
-package: libsmear.a
+stage: libsmear.a
+	rm -rf $(SMEAR_RELEASE_STAGE_DIR)
+	mkdir -p $(SMEAR_RELEASE_STAGE_DIR)
+	cp $< $(SMEAR_RELEASE_STAGE_DIR)
+	cp -r include $(SMEAR_RELEASE_STAGE_DIR)
+	cp LICENSE $(SMEAR_RELEASE_STAGE_DIR)
+	cp README.md $(SMEAR_RELEASE_STAGE_DIR)
+
+package: $(foreach EXT,$(PKGEXT),libsmear-dev_$(SMEAR_VERSION)_$(PLATFORM).$(EXT))
+
+zip: libsmear-dev_$(SMEAR_VERSION)_$(PLATFORM).zip
+libsmear-dev_$(SMEAR_VERSION)_$(PLATFORM).zip: stage
+	cd $(OBJDIR) && \
+	if type zip >/dev/null 2>&1; then \
+	    zip -r $@ $(SMEAR_RELEASE_SUBDIR); \
+	elif type 7z >/dev/null 2>&1; then \
+	    7z a $@ $(SMEAR_RELEASE_SUBDIR); \
+	fi
+	mv $(OBJDIR)/$@ .
+
+deb: libsmear-dev_$(SMEAR_VERSION)_$(PLATFORM).deb
+libsmear-dev_$(SMEAR_VERSION)_$(PLATFORM).deb: libsmear.a
 	debuild -i -us -uc -b
 	mv ../libsmear-dev_*.deb .
 	mv ../libsmear_*_*.build .
@@ -62,6 +94,6 @@ package: libsmear.a
 clean:
 	rm -rf debian/libsmear-dev
 	rm -rf debian/.debhelper
-	rm -f obj/* *.a test-* *.dmp *.deb *.build *.buildinfo *.changes
+	rm -rf obj/* *.a test-* *.dmp *.deb *.zip *.build *.buildinfo *.changes
 	rm -f debian/files debian/libsmear-dev.substvars
 	rm -f debian/debhelper-build-stamp
