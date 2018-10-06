@@ -5,6 +5,10 @@
 #include <stdlib.h>
 #include <stdint.h>
 
+#include <smear/version.h>
+
+const char *SRT_get_version(void);
+
 #define CAT(a, b) a ## b
 #define CAT3(a, b, c) a ## b ## c
 #define CAT4(a, b, c, d) a ## b ## c ## d

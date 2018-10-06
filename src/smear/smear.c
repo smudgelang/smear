@@ -6,7 +6,7 @@
 #include <semaphore.h>
 #include "smeartime.h"
 #include "cancellable.h"
-#include "smear.h"
+#include "smear/smear.h"
 
 #define EXPORT_SYMBOL __attribute__((visibility ("default")))
 #ifdef __STRICT_ANSI__
@@ -14,6 +14,11 @@
 #else
 #define ERROR_MSG(msg) fprintf(stderr, "%s - %s\n", __FUNCTION__, msg)
 #endif
+
+EXPORT_SYMBOL const char *SRT_get_version(void)
+{
+    return SMEAR_VERSION;
+}
 
 #define NS_PER_MS 1000000
 
