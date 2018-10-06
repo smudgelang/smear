@@ -52,7 +52,7 @@ obj/libsmear.a: libsmear.a
 obj/%.o: %.c
 	$(CC) $(CFLAGS) $(INCLUDE) $(LIBS) -c -o $@ $<
 
-libsmear-dev%.deb: libsmear.a
+package: libsmear.a
 	debuild -i --no-sign -b
 	mv ../libsmear-dev_*.deb .
 	mv ../libsmear_*_*.build .
