@@ -8,4 +8,5 @@ addons:
       valgrind
       devscripts
       debhelper
+      fakeroot
 script: make all runtests
