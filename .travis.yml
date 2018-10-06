@@ -9,8 +9,8 @@ addons:
       valgrind
       devscripts
       fakeroot
-      debhelper
 before-install:
 - sudo add-apt-repository ppa:ondrej/debhelper
 - sudo apt-get -qq update
+- sudo apt-get install debhelper
 script: make all runtests
