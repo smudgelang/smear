@@ -2,7 +2,7 @@ ifeq ($(OS),Windows_NT)
 PKGEXT=zip
 PLATFORM=windows
 else
-PKGEXT=deb
+PKGEXT=tgz deb
 PLATFORM=$(shell dpkg --print-architecture)
 endif
 OBJDIR := obj
@@ -27,7 +27,7 @@ OBJ := $(SRC:%.c=$(OBJDIR)/%.o)
 LIBS := $(sort $(LIBS))
 
 .PHONY: clean default all tests \
-        package zip deb
+        package zip tgz deb
 
 
 debug:
@@ -84,9 +84,15 @@ libsmear-dev_$(SMEAR_VERSION)_$(PLATFORM).zip: stage
 	fi
 	mv $(OBJDIR)/$@ .
 
+tgz: libsmear-dev_$(SMEAR_VERSION)_$(PLATFORM).tgz
+libsmear-dev_$(SMEAR_VERSION)_$(PLATFORM).tgz: stage
+	cd $(OBJDIR) && \
+	fakeroot tar -czf $@ $(SMEAR_RELEASE_SUBDIR)
+	mv $(OBJDIR)/$@ .
+
 deb: libsmear-dev_$(SMEAR_VERSION)_$(PLATFORM).deb
 libsmear-dev_$(SMEAR_VERSION)_$(PLATFORM).deb: libsmear.a
-	debuild -i -us -uc -b
+	debuild -i -us -uc -nc -b
 	mv ../libsmear-dev_*.deb .
 	mv ../libsmear_*_*.build .
 	mv ../libsmear_*_*.buildinfo .
@@ -95,6 +101,6 @@ libsmear-dev_$(SMEAR_VERSION)_$(PLATFORM).deb: libsmear.a
 clean:
 	rm -rf debian/libsmear-dev
 	rm -rf debian/.debhelper
-	rm -rf obj/* *.a test-* *.dmp *.deb *.zip *.build *.buildinfo *.changes
+	rm -rf obj/* *.a test-* *.dmp *.deb *.tgz *.zip *.build *.buildinfo *.changes
 	rm -f debian/files debian/libsmear-dev.substvars
 	rm -f debian/debhelper-build-stamp
