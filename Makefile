@@ -87,10 +87,10 @@ libsmear-dev_$(SMEAR_VERSION)_$(PLATFORM).zip: stage
 deb: libsmear-dev_$(SMEAR_VERSION)_$(PLATFORM).deb
 libsmear-dev_$(SMEAR_VERSION)_$(PLATFORM).deb: libsmear.a
 	debuild -i -us -uc -b
-	mv ../libsmear-dev_*.deb .
-	mv ../libsmear_*_*.build .
-	mv ../libsmear_*_*.buildinfo .
-	mv ../libsmear_*_*.changes .
+	mv ../$@ .
+	mv ../libsmear_$(SMEAR_VERSION)_$(PLATFORM).build .
+	mv ../libsmear_$(SMEAR_VERSION)_$(PLATFORM).buildinfo .
+	mv ../libsmear_$(SMEAR_VERSION)_$(PLATFORM).changes .
 
 clean:
 	rm -rf debian/libsmear-dev
