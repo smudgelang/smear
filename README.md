@@ -6,13 +6,21 @@
 Smear is the SMudge Environment And Runtime, a standard library for
 the Smudge state machine programming language.
 
-## Using Smear
+## Getting Smear
+
+### Binaries
+
+If you really want to install the Smear library by itself, there are
+binary releases available for Windows and Linux available on the
+[Smear releases page](https://github.com/smudgelang/smear/releases).
 
 ### Building and Linking
 
 To use this package in your own Smudge projects, build "libsmear.a"
 and put it in your library include path. Then link your code with
 "-lsmear -pthread". Also put "smear.h" somewhere in your include path.
+
+## Using Smear
 
 ### Autogenerate Smear Bindings
 
