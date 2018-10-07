@@ -10,7 +10,7 @@ addons:
       devscripts
       fakeroot
 install:
-- sudo add-apt-repository -y "deb http://ppa.launchpad.net/ondrej/debhelper/ubuntu raring/main"
+- sudo add-apt-repository -y "deb http://ppa.launchpad.net/jonathonf/debhelper/ubuntu xenial main"
 - sudo apt-get -qq update
 - sudo apt-get install debhelper
 script: make all runtests
