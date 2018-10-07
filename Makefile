@@ -26,7 +26,7 @@ OBJ := $(SRC:%.c=$(OBJDIR)/%.o)
 
 LIBS := $(sort $(LIBS))
 
-.PHONY: clean default all tests \
+.PHONY: clean default all  \
         package zip deb
 
 
