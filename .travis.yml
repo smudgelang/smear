@@ -1,9 +1,19 @@
 language: c
 compiler: gcc
 os: linux
-sudo: false
-install: sudo apt-get -y install valgrind
-script: make all runtests
+dist: trusty
+sudo: required
+addons:
+  apt:
+    packages:
+      devscripts
+      fakeroot
+      valgrind
+install:
+- sudo apt-add-repository -y ppa:jonathonf/debhelper
+- sudo apt-get -qq update
+- sudo apt-get install -y debhelper
+script: make all runtests package
 
 deploy:
   provider: releases
