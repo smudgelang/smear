@@ -8,9 +8,10 @@ addons:
     packages:
       devscripts
       fakeroot
+      perl
       #valgrind
 install:
 - sudo add-apt-repository -y "deb http://ppa.launchpad.net/jonathonf/debhelper/ubuntu xenial main"
 - sudo apt-get -qq update
-- sudo apt-get install debhelper dh-strip-nondeterminism perl
+- sudo apt-get install debhelper dh-strip-nondeterminism
 script: make all runtests
