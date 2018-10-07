@@ -93,6 +93,7 @@ libsmear-dev_$(SMEAR_VERSION)_$(PLATFORM).tgz: stage
 deb: libsmear-dev_$(SMEAR_VERSION)_$(PLATFORM).deb
 libsmear-dev_$(SMEAR_VERSION)_$(PLATFORM).deb: libsmear.a
 	debuild -i -us -uc -nc -b
+	mv ../libsmear-dev_$(SMEAR_VERSION)_$(PLATFORM).deb .
 	mv ../libsmear_$(SMEAR_VERSION)_$(PLATFORM).* .
 
 clean:
