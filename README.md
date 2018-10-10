@@ -22,6 +22,11 @@ If you really want to install the Smear library by itself, there are
 binary releases available for Windows and Linux available on the
 [Smear releases page](https://github.com/smudgelang/smear/releases).
 
+Users of Debian and derivatives can add the Smudge package repository
+and keep smear installations current by following [these
+directions](https://smudgelang.github.io/). The package for Smear
+itself is called libsmear-dev.
+
 ### Building and Linking
 
 To use this package in your own Smudge projects, build `libsmear.a`.
