@@ -22,7 +22,7 @@ MODULES := smear cancelq number
 LIBS :=
 SRC := 
 CC := gcc
-CFLAGS := -ggdb3 -std=c99 -Wall -Werror -Wextra -Wno-unused-parameter -Wno-unused-function -fvisibility=hidden -O3 -pedantic
+CFLAGS := -ggdb3 -std=c99 -Wall -Werror -Wextra -Wno-unused-parameter -Wno-unused-function -fvisibility=hidden -O3 -fPIC -pedantic
 INCLUDE := -Iinclude $(foreach mod, $(MODULES), -Isrc/$(mod))
 VPATH := $(foreach mod, $(MODULES), src/$(mod)) include
 PACKAGE=libsmear-dev
