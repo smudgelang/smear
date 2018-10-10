@@ -15,7 +15,7 @@ build_script:
   - mingw32-make package
 
 artifacts:
-- path: libsmear-dev_*_windows.zip
+- path: libsmear-dev_*_*.zip
   name: Smudge Archive
 
 deploy:
