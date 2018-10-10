@@ -1,10 +1,21 @@
+CPU_PLAT_RAW=$(shell $(CC) -dumpmachine)
+CPU_RAW=$(shell echo "$(CPU_PLAT_RAW)" | cut -d "-" -f 1)
+CPU_x86_64=amd64
+CPU_i386=i386
+TARGET_CPU=$(CPU_$(CPU_RAW))
+PLAT_RAW=$(shell echo "$(CPU_PLAT_RAW)" | cut -d "-" -f 2,3)
+PLAT_unknown-linux=linux
+PLAT_linux-gnu=linux
+PLAT_unknown-mingw32=windows
+PLAT_w64-mingw32=windows
+TARGET_PLATFORM=$(PLAT_$(PLAT_RAW))
+
 ifeq ($(OS),Windows_NT)
 PKGEXT=zip
-PLATFORM=windows
 else
 PKGEXT=tgz deb
-PLATFORM=$(shell dpkg --print-architecture)
 endif
+
 OBJDIR := obj
 SRCDIR := src
 MODULES := smear cancelq number
@@ -14,6 +25,7 @@ CC := gcc
 CFLAGS := -ggdb3 -std=c99 -Wall -Werror -Wextra -Wno-unused-parameter -Wno-unused-function -fvisibility=hidden -O3 -pedantic
 INCLUDE := -Iinclude $(foreach mod, $(MODULES), -Isrc/$(mod))
 VPATH := $(foreach mod, $(MODULES), src/$(mod)) include
+PACKAGE=libsmear-dev
 SMEAR_RELEASE_SUBDIR=smear
 SMEAR_RELEASE_STAGE_DIR=$(OBJDIR)/$(SMEAR_RELEASE_SUBDIR)
 SMEAR_VERSION=$(shell grep "\bSMEAR_VERSION\b" include/smear/version.h | cut -f 2 -d '"')
@@ -72,10 +84,10 @@ stage: libsmear.a
 	cp LICENSE $(SMEAR_RELEASE_STAGE_DIR)
 	cp README.md $(SMEAR_RELEASE_STAGE_DIR)
 
-package: $(foreach EXT,$(PKGEXT),libsmear-dev_$(SMEAR_VERSION)_$(PLATFORM).$(EXT))
+package: $(foreach EXT,$(PKGEXT),$(PACKAGE)_$(SMEAR_VERSION)-$(TARGET_PLATFORM)_$(TARGET_CPU).$(EXT))
 
-zip: libsmear-dev_$(SMEAR_VERSION)_$(PLATFORM).zip
-libsmear-dev_$(SMEAR_VERSION)_$(PLATFORM).zip: stage
+zip: $(PACKAGE)_$(SMEAR_VERSION)-$(TARGET_PLATFORM)_$(TARGET_CPU).zip
+$(PACKAGE)_$(SMEAR_VERSION)-$(TARGET_PLATFORM)_$(TARGET_CPU).zip: stage
 	cd $(OBJDIR) && \
 	if type zip >/dev/null 2>&1; then \
 	    zip -r $@ $(SMEAR_RELEASE_SUBDIR); \
@@ -84,21 +96,21 @@ libsmear-dev_$(SMEAR_VERSION)_$(PLATFORM).zip: stage
 	fi
 	mv $(OBJDIR)/$@ .
 
-tgz: libsmear-dev_$(SMEAR_VERSION)_$(PLATFORM).tgz
-libsmear-dev_$(SMEAR_VERSION)_$(PLATFORM).tgz: stage
+tgz: $(PACKAGE)_$(SMEAR_VERSION)-$(TARGET_PLATFORM)_$(TARGET_CPU).tgz
+$(PACKAGE)_$(SMEAR_VERSION)-linux_$(TARGET_CPU).tgz: stage
 	cd $(OBJDIR) && \
 	fakeroot tar -czf $@ $(SMEAR_RELEASE_SUBDIR)
 	mv $(OBJDIR)/$@ .
 
-deb: libsmear-dev_$(SMEAR_VERSION)_$(PLATFORM).deb
-libsmear-dev_$(SMEAR_VERSION)_$(PLATFORM).deb: libsmear.a
+deb: $(PACKAGE)_$(SMEAR_VERSION)-$(TARGET_PLATFORM)_$(TARGET_CPU).deb
+$(PACKAGE)_$(SMEAR_VERSION)-linux_$(TARGET_CPU).deb: libsmear.a
 	debuild -i -us -uc -nc -b
-	mv ../libsmear-dev_$(SMEAR_VERSION)_$(PLATFORM).deb .
-	mv ../libsmear_$(SMEAR_VERSION)_$(PLATFORM).* .
+	mv ../$(PACKAGE)_$(SMEAR_VERSION)-$(TARGET_PLATFORM)_$(TARGET_CPU).deb .
+	mv ../libsmear_$(SMEAR_VERSION)-$(TARGET_PLATFORM)_$(TARGET_CPU).* .
 
 clean:
-	rm -rf debian/libsmear-dev
+	rm -rf debian/$(PACKAGE)
 	rm -rf debian/.debhelper
 	rm -rf obj/* *.a test-* *.dmp *.deb *.tgz *.zip *.build *.buildinfo *.changes
-	rm -f debian/files debian/libsmear-dev.substvars
+	rm -f debian/files debian/$(PACKAGE).substvars
 	rm -f debian/debhelper-build-stamp
