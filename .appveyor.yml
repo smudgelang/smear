@@ -8,14 +8,14 @@
 
 environment:
   matrix:
-  - MINGW_DIR=C:\mingw-w64\x86_64-7.3.0-posix-seh-rt_v5-rev0\mingw64\bin
-  - MINGW_DIR=C:\mingw-w64\i686-6.3.0-posix-dwarf-rt_v5-rev1\mingw32\bin
+  - mingw-dir: C:\mingw-w64\x86_64-7.3.0-posix-seh-rt_v5-rev0\mingw64\bin
+  - mingw-dir: C:\mingw-w64\i686-6.3.0-posix-dwarf-rt_v5-rev1\mingw32\bin
 
 matrix:
   fast_finish: true
 
 before_build:
-- set PATH=%CD%\.local\bin;%MINGW_DIR%;C:\Program Files\Git\mingw64\bin;%PATH%
+- set PATH=%CD%\.local\bin;$(mingw-dir);C:\Program Files\Git\mingw64\bin;%PATH%
 
 build_script:
   - mingw32-make debug
