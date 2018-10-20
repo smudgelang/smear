@@ -60,7 +60,7 @@ debug:
 	@echo vpath $(VPATH)
 	@echo target cpu $(TARGET_CPU)
 	@echo target platform $(TARGET_PLATFORM)
-	@echo gcc $(shell which gcc)
+	@echo raw cpu $(CPU_RAW) raw plat $(CPU_PLAT_RAW)
 
 all: libsmear.a libsmear.dmp tests obj/libsmear.a
 
