@@ -7,6 +7,7 @@ CPU_PLAT_RAW=$(shell $(CC) -dumpmachine)
 CPU_RAW=$(shell $(CC) $(TARGET_ARCH_CFLAG) -Q --help=target | grep march | awk '{print $$2}')
 CPU_x86_64=amd64
 CPU_x86-64=amd64
+CPU_nocona=amd64
 CPU_i386=i386
 CPU_i686=i386
 TARGET_CPU=$(CPU_$(CPU_RAW))
@@ -60,7 +61,6 @@ debug:
 	@echo vpath $(VPATH)
 	@echo target cpu $(TARGET_CPU)
 	@echo target platform $(TARGET_PLATFORM)
-	@echo raw cpu $(CPU_RAW) raw plat $(CPU_PLAT_RAW)
 
 all: libsmear.a libsmear.dmp tests obj/libsmear.a
 
