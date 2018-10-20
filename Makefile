@@ -114,7 +114,7 @@ $(PACKAGE)_$(SMEAR_VERSION)-linux_$(TARGET_CPU).tgz: stage
 
 deb: $(PACKAGE)_$(SMEAR_VERSION)-$(TARGET_PLATFORM)_$(TARGET_CPU).deb
 $(PACKAGE)_$(SMEAR_VERSION)-linux_$(TARGET_CPU).deb: libsmear.a
-	debuild --target-arch $(TARGET_CPU) -i -us -uc -nc -b
+	debuild -i -us -uc -nc -b
 	mv ../$(PACKAGE)_$(SMEAR_VERSION)-$(TARGET_PLATFORM)_$(TARGET_CPU).deb .
 	mv ../libsmear_$(SMEAR_VERSION)-$(TARGET_PLATFORM)_$(TARGET_CPU).* .
 
