@@ -1,7 +1,14 @@
+TARGET_ARCH_CFLAG_32=-m32
+TARGET_ARCH_CFLAG=$(TARGET_ARCH_CFLAG_$(TARGETBITS))
+TARGET_ARCH_LDFLAG_32=-melf_i386
+TARGET_ARCH_LDFLAG=$(TARGET_ARCH_LDFLAG_$(TARGETBITS))
+
 CPU_PLAT_RAW=$(shell $(CC) -dumpmachine)
-CPU_RAW=$(shell echo "$(CPU_PLAT_RAW)" | cut -d "-" -f 1)
+CPU_RAW=$(shell $(CC) $(TARGET_ARCH_CFLAG) -Q --help=target | grep march | awk '{print $$2}')
 CPU_x86_64=amd64
+CPU_x86-64=amd64
 CPU_i386=i386
+CPU_i686=i386
 TARGET_CPU=$(CPU_$(CPU_RAW))
 PLAT_RAW=$(shell echo "$(CPU_PLAT_RAW)" | cut -d "-" -f 2,3)
 PLAT_unknown-linux=linux
@@ -22,7 +29,8 @@ MODULES := smear cancelq number
 LIBS :=
 SRC := 
 CC := gcc
-CFLAGS := -ggdb3 -std=c99 -Wall -Werror -Wextra -Wno-unused-parameter -Wno-unused-function -fvisibility=hidden -O3 -fPIC -pedantic
+CFLAGS := $(TARGET_ARCH_CFLAG) -ggdb3 -std=c99 -Wall -Werror -Wextra -Wno-unused-parameter -Wno-unused-function -fvisibility=hidden -O3 -fPIC -pedantic
+LDFLAGS := $(TARGET_ARCH_LDFLAG) -r
 INCLUDE := -Iinclude $(foreach mod, $(MODULES), -Isrc/$(mod))
 VPATH := $(foreach mod, $(MODULES), src/$(mod)) include
 PACKAGE=libsmear-dev
@@ -50,6 +58,8 @@ debug:
 	@echo arch $(ARCH)
 	@echo os $(OS)
 	@echo vpath $(VPATH)
+	@echo target cpu $(TARGET_CPU)
+	@echo target platform $(TARGET_PLATFORM)
 
 all: libsmear.a libsmear.dmp tests obj/libsmear.a
 
@@ -66,7 +76,7 @@ obj/%.d: %.c # Slightly modified from GNU Make tutorial
 	  rm -f $@.$$$$
 
 libsmear.a: $(OBJ)
-	$(LD) -r -o $@ $^
+	$(LD) $(LDFLAGS) -o $@ $^
 	objcopy --localize-hidden $@
 
 obj/libsmear.a: libsmear.a
@@ -104,7 +114,7 @@ $(PACKAGE)_$(SMEAR_VERSION)-linux_$(TARGET_CPU).tgz: stage
 
 deb: $(PACKAGE)_$(SMEAR_VERSION)-$(TARGET_PLATFORM)_$(TARGET_CPU).deb
 $(PACKAGE)_$(SMEAR_VERSION)-linux_$(TARGET_CPU).deb: libsmear.a
-	debuild -i -us -uc -nc -b
+	debuild --target-arch $(TARGET_CPU) -i -us -uc -nc -b
 	mv ../$(PACKAGE)_$(SMEAR_VERSION)-$(TARGET_PLATFORM)_$(TARGET_CPU).deb .
 	mv ../libsmear_$(SMEAR_VERSION)-$(TARGET_PLATFORM)_$(TARGET_CPU).* .
 
