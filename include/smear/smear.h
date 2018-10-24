@@ -1,6 +1,10 @@
 #ifndef __SMEAR_H__
 #define __SMEAR_H__
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 #include <string.h>
 #include <stdlib.h>
 #include <stdint.h>
@@ -98,4 +102,9 @@ cancel_token_t SRT_send_later(const void *msg, void (handler)(const void *),
  * held by the cancellable event. If this is called after the event is
  * delivered, it only releases the resources. */
 void SRT_cancel(cancel_token_t id);
+
+#ifdef __cplusplus
+}
+#endif
+
 #endif
