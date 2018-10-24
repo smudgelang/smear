@@ -16,6 +16,7 @@ matrix:
 
 before_build:
 - set PATH=%CD%\.local\bin;%MINGW_DIR%;C:\Program Files\Git\mingw64\bin;%PATH%
+- set CC=gcc
 
 build_script:
   - mingw32-make debug
