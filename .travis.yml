@@ -13,7 +13,18 @@ install:
 - sudo apt-add-repository -y ppa:jonathonf/debhelper
 - sudo apt-get -qq update
 - sudo apt-get install -y debhelper
-script: make all runtests package
+
+env:
+- TARGETBITS=64
+
+matrix:
+  fast_finish: true
+
+script:
+- make debug
+- make all
+- make runtests
+- make package
 
 deploy:
   provider: releases

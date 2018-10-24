@@ -4,6 +4,7 @@
 #include <assert.h>
 #include <stdint.h>
 #include <stdio.h>
+#include <inttypes.h>
 #include "cancellable.h"
 
 #define COUNT 3200
@@ -84,7 +85,7 @@ static void test_threads(void)
         } while (e == NULL);
 
         if ((i & 0xff) == 0)
-            printf("Tick %ld\n", i);
+            printf("Tick %" PRIdPTR "\n", i);
         assert(e == (void *)i);
     }
 
