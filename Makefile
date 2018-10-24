@@ -21,7 +21,9 @@ SRCDIR := src
 MODULES := smear cancelq number
 LIBS :=
 SRC := 
-CC := gcc
+CC ?= gcc
+OBJDUMP ?= objdump
+OBJCOPY ?= objcopy
 CFLAGS := -ggdb3 -std=c99 -Wall -Werror -Wextra -Wno-unused-parameter -Wno-unused-function -fvisibility=hidden -O3 -fPIC -pedantic
 INCLUDE := -Iinclude $(foreach mod, $(MODULES), -Isrc/$(mod))
 VPATH := $(foreach mod, $(MODULES), src/$(mod)) include
@@ -57,7 +59,7 @@ all: libsmear.a libsmear.dmp tests obj/libsmear.a
 -include $(OBJ:.o=.d)
 
 %.dmp: %.a
-	objdump -dSt $< > $@
+	$(OBJDUMP) -dSt $< > $@
 
 obj/%.d: %.c # Slightly modified from GNU Make tutorial
 	@set -e; rm -f $@; \
@@ -67,7 +69,7 @@ obj/%.d: %.c # Slightly modified from GNU Make tutorial
 
 libsmear.a: $(OBJ)
 	$(LD) -r -o $@ $^
-	objcopy --localize-hidden $@
+	$(OBJCOPY) --localize-hidden $@
 
 obj/libsmear.a: libsmear.a
 	strip -o $@ $<
