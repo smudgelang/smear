@@ -24,11 +24,13 @@ test-cancelq-%: test-cancelq-%.c obj/cancellable.o
 
 test-queue: test-queue.c obj/queue.o
 	$(CC) $(CFLAGS) $(INCLUDE) -o $@ $^
-
 test-smear-%.o: test-smear-%.c
 	$(CC) $(CFLAGS) $(INCLUDE) -c -o $@ $<
 
 test-smear-%: test-smear-%.o test-smear-%_main.o libsmear.a 
+	$(CC) $(CFLAGS) $(INCLUDE) -o $@ $^ -pthread
+
+test-rt-%: test-rt-%.o libsmear.a
 	$(CC) $(CFLAGS) $(INCLUDE) -o $@ $^ -pthread
 
 test-number: test-number.c obj/number.o
