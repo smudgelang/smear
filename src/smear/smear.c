@@ -204,9 +204,13 @@ EXPORT_SYMBOL void SRT_wait_for_empty(void)
 EXPORT_SYMBOL void SRT_stop(void)
 {
     void *rv;
+    int cancelled;
+
     printf("Before cancel\n");
     fflush(stdout);
-    pthread_cancel(tid);
+    cancelled = pthread_cancel(tid);
+    if (cancelled != 0)
+        perror("Didn't cancel the thread: ");
     printf("Between cancel and join\n");
     fflush(stdout);
     pthread_join(tid, &rv);
