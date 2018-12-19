@@ -52,7 +52,7 @@ test-number: test-number.c obj/number.o
 %.log: % %.fifo
 	rm -f $@
 	tee -a $@ < $<.fifo &
-	./$< 2>&1 > $<.fifo
+	strace ./$< 2>&1 > $<.fifo
 
 runtests: $(foreach t, $(TESTS), $(t).log) \
           $(foreach t, $(MEMCHECK_TESTS), $(t).memcheck.log) \
