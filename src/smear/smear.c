@@ -33,6 +33,7 @@ typedef struct
 static event_queue_t *q;
 static pthread_t tid;
 static sem_t idle_sem;
+static bool done;
 
 /* The plan:
  *
@@ -64,6 +65,8 @@ static void *mainloop(void *unused)
     {
         flushEventQueue();
         sem_post(&idle_sem);
+        if (done)
+            return NULL;
         sem_wait(&idle_sem);
     }
     return NULL;
@@ -164,6 +167,7 @@ EXPORT_SYMBOL void SRT_cancel(cancel_token_t id)
 
 EXPORT_SYMBOL void SRT_init(void)
 {
+    done = false;
     q = eq_new();
     sem_init(&idle_sem, 0, 0);
 }
@@ -204,17 +208,11 @@ EXPORT_SYMBOL void SRT_wait_for_empty(void)
 EXPORT_SYMBOL void SRT_stop(void)
 {
     void *rv;
-    int cancelled;
 
-    printf("Before cancel\n");
     fflush(stdout);
-    cancelled = pthread_cancel(tid);
-    if (cancelled != 0)
-        perror("Didn't cancel the thread: ");
-    printf("Between cancel and join\n");
+    done = true;
     fflush(stdout);
     pthread_join(tid, &rv);
-    printf("After join\n");
     fflush(stdout);
     eq_free(q);
     sem_destroy(&idle_sem);
