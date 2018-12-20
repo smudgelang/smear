@@ -231,10 +231,10 @@ void *eq_next_event(event_queue_t *q, abs_time_t time)
     }
 
     heap_rm(&q->heap, 1);
+fail:
     if (empty_LH(q))
         pthread_cond_broadcast(&q->empty);
 
-fail:
     pthread_mutex_unlock(&q->lock);
 done:
     return (void *)event;

@@ -33,6 +33,7 @@ typedef struct
 static event_queue_t *q;
 static pthread_t tid;
 static sem_t idle_sem;
+static sem_t done;
 
 /* The plan:
  *
@@ -64,6 +65,8 @@ static void *mainloop(void *unused)
     {
         flushEventQueue();
         sem_post(&idle_sem);
+        if (sem_trywait(&done) == 0)
+            return NULL;
         sem_wait(&idle_sem);
     }
     return NULL;
@@ -166,6 +169,7 @@ EXPORT_SYMBOL void SRT_init(void)
 {
     q = eq_new();
     sem_init(&idle_sem, 0, 0);
+    sem_init(&done, 0, 0);
 }
 
 EXPORT_SYMBOL void SRT_run(void)
@@ -186,14 +190,28 @@ EXPORT_SYMBOL void SRT_wait_for_idle(void)
 
 EXPORT_SYMBOL void SRT_wait_for_empty(void)
 {
-    eq_wait_empty(q);
+    bool loop;
+
+    loop = true;
+    while (loop)
+    {
+        eq_wait_empty(q);
+        sem_wait(&idle_sem);
+        if (eq_empty(q))
+        {
+            loop = false;
+        }
+        sem_post(&idle_sem);
+    }
 }
 
 EXPORT_SYMBOL void SRT_stop(void)
 {
     void *rv;
-    pthread_cancel(tid);
+
+    sem_post(&done);
     pthread_join(tid, &rv);
     eq_free(q);
     sem_destroy(&idle_sem);
+    sem_destroy(&done);
 }

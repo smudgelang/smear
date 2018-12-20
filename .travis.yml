@@ -1,7 +1,7 @@
 language: c
 compiler: gcc
 os: linux
-dist: trusty
+dist: xenial
 sudo: required
 addons:
   apt:

@@ -32,7 +32,7 @@ SRC :=
 CC ?= gcc
 OBJDUMP ?= objdump
 OBJCOPY ?= objcopy
-CFLAGS := $(TARGET_ARCH_CFLAG) -ggdb3 -std=c99 -Wall -Werror -Wextra -Wno-unused-parameter -Wno-unused-function -fvisibility=hidden -O3 -fPIC -pedantic
+CFLAGS := $(TARGET_ARCH_CFLAG) -ggdb3 -std=c99 -Wall -Werror -Wextra -Wno-unused-parameter -Wno-unused-function -fvisibility=hidden -O3 -fPIC # -pedantic
 LDFLAGS := $(TARGET_ARCH_LDFLAG) -r
 INCLUDE := -Iinclude $(foreach mod, $(MODULES), -Isrc/$(mod))
 VPATH := $(foreach mod, $(MODULES), src/$(mod)) include
@@ -124,6 +124,6 @@ $(PACKAGE)_$(SMEAR_VERSION)-linux_$(TARGET_CPU).deb: libsmear.a
 clean:
 	rm -rf debian/$(PACKAGE)
 	rm -rf debian/.debhelper
-	rm -rf obj/* *.a test-* *.dmp *.deb *.tgz *.zip *.build *.buildinfo *.changes
+	rm -rf obj/* *.a *.dmp *.deb *.tgz *.zip *.build *.buildinfo *.changes
 	rm -f debian/files debian/$(PACKAGE).substvars
 	rm -f debian/debhelper-build-stamp
