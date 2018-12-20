@@ -209,11 +209,8 @@ EXPORT_SYMBOL void SRT_stop(void)
 {
     void *rv;
 
-    fflush(stdout);
     sem_post(&done);
-    fflush(stdout);
     pthread_join(tid, &rv);
-    fflush(stdout);
     eq_free(q);
     sem_destroy(&idle_sem);
     sem_destroy(&done);
