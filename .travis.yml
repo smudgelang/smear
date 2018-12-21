@@ -9,7 +9,6 @@ addons:
       devscripts
       fakeroot
       valgrind
-      libbsd-dev
 install:
 - sudo apt-add-repository -y ppa:jonathonf/debhelper
 - sudo apt-get -qq update
