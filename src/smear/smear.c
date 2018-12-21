@@ -4,6 +4,8 @@
 #include <unistd.h>
 #include <pthread.h>
 #include <semaphore.h>
+#include <time.h>
+#include <bsd/sys/time.h>
 #include "smeartime.h"
 #include "cancellable.h"
 #include "smear/smear.h"
@@ -34,6 +36,22 @@ static event_queue_t *q;
 static pthread_t tid;
 static sem_t idle_sem;
 static sem_t done;
+static sem_t wake;
+
+static void wait_wake(void)
+{
+    struct timespec soon;
+    struct timespec now;
+    struct timespec onems;
+
+    onems.tv_sec = 0;
+    onems.tv_nsec = 1000000; // 1 million nanoseconds per millisecond
+
+    clock_gettime(CLOCK_REALTIME, &now);
+    
+    timespecadd(&now, &onems, &soon);
+    sem_timedwait(&wake, &soon);
+}
 
 /* The plan:
  *
@@ -67,6 +85,7 @@ static void *mainloop(void *unused)
         sem_post(&idle_sem);
         if (sem_trywait(&done) == 0)
             return NULL;
+        wait_wake();
         sem_wait(&idle_sem);
     }
     return NULL;
@@ -133,6 +152,7 @@ EXPORT_SYMBOL void SRT_send_message(const void *msg,
         ERROR_MSG("Failed to enqueue message.");
         exit(-2);
     }
+    sem_post(&wake);
 }
 
 EXPORT_SYMBOL cancel_token_t SRT_send_later(const void *msg,
@@ -170,6 +190,7 @@ EXPORT_SYMBOL void SRT_init(void)
     q = eq_new();
     sem_init(&idle_sem, 0, 0);
     sem_init(&done, 0, 0);
+    sem_init(&wake, 0, 0);
 }
 
 EXPORT_SYMBOL void SRT_run(void)
@@ -214,4 +235,5 @@ EXPORT_SYMBOL void SRT_stop(void)
     eq_free(q);
     sem_destroy(&idle_sem);
     sem_destroy(&done);
+    sem_destroy(&wake);
 }
