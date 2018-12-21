@@ -35,11 +35,9 @@ abs_time_t get_now_real_ns(void)
     FILETIME now;
     GetSystemTimePreciseAsFileTime(&now);
 
-    uint64_t lowWidth = 1<<(8*sizeof(now.dwLowDateTime));
-    assert(lowWidth != 0);
-    uint128_t ns = mul128(100,
-                    add128(mul128(now.dwHighDateTime, lowWidth),
-                           cast128(now.dwLowDateTime)));
+    uint64_t highAdj = ((uint64_t)now.dwHighDateTime) <<
+                       (8*sizeof(now.dwLowDateTime));
+    uint128_t ns = mul128(100, highAdj + now.dwLowDateTime);
     assert(ns.hi == 0);
     return ns.lo;
 }
