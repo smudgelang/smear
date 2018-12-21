@@ -22,7 +22,7 @@ EXPORT_SYMBOL const char *SRT_get_version(void)
 }
 
 #define NS_PER_MS 1000000
-#define ONE_BILLION 1000000000
+#define NANOSECONDS_PER_SECOND 1000000000
 
 typedef void (*handler_t)(const void *);
 
@@ -38,36 +38,13 @@ static sem_t idle_sem;
 static sem_t done;
 static sem_t wake;
 
-// Including libbsd is a pain across platforms, so...
-static int timespecadd(const struct timespec *a, const struct timespec *b,
-                       struct timespec *res)
-{
-    int64_t nsec;
-
-    nsec = a->tv_nsec + b->tv_nsec;
-    res->tv_sec = a->tv_sec + b->tv_sec;
-    while (nsec > ONE_BILLION) // 1 billion nanoseconds/second
-    {
-        nsec -= ONE_BILLION;
-        res->tv_sec += 1;
-    }
-    res->tv_nsec = (long)nsec;
-
-    return 0;
-}
-
 static void wait_wake(void)
 {
-    struct timespec soon;
-    struct timespec now;
-    struct timespec onems;
-
-    onems.tv_sec = 0;
-    onems.tv_nsec = 1000000; // 1 million nanoseconds per millisecond
-
-    clock_gettime(CLOCK_REALTIME, &now);
-    
-    timespecadd(&now, &onems, &soon);
+    abs_time_t in_one_ms = time_add(get_now_real_ns(), NS_PER_MS);
+    struct timespec soon = {
+        .tv_sec  = in_one_ms / NANOSECONDS_PER_SECOND,
+        .tv_nsec = in_one_ms % NANOSECONDS_PER_SECOND
+    };
     sem_timedwait(&wake, &soon);
 }
 

@@ -29,6 +29,10 @@ int main(void)
     uint128_t twotothe128minus2 = {-2, -1};
     uint128_t twotothe128minus1 = {-1, -1};
 
+    // cast
+    assert(cast128(1234567890).lo == 1234567890);
+    assert(cast128(1234567890).hi == 0);
+
     // lt true
     assert(lt128(one, two));
     assert(lt128(twotothe64, twotothe65));

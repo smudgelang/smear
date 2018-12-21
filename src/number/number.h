@@ -8,6 +8,8 @@ typedef struct uint128_t {
     uint64_t hi;
 } uint128_t;
 
+uint128_t cast128(uint64_t);
+
 int lt128(uint128_t, uint128_t);
 int gt128(uint128_t, uint128_t);
 int le128(uint128_t, uint128_t);

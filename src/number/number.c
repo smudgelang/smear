@@ -2,6 +2,11 @@
 #include <stdint.h>
 #include "number.h"
 
+uint128_t cast128(uint64_t n)
+{
+    return (uint128_t){ .lo = n, .hi = 0 };
+}
+
 int lt128(uint128_t n, uint128_t m)
 {
     return n.hi < m.hi ||
@@ -158,8 +163,7 @@ uint128_t div128(uint128_t r, uint64_t d64)
     size_t m = 4;
 
     // up cast since it is simpler to divide like types.
-    uint128_t d = {0, 0};
-    d.lo = d64;
+    uint128_t d = cast128(d64);
 
     //r has n<=8 digits:
     //r = r_{n - 1} * 16^{n - 1} + ... + r_0
