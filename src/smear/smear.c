@@ -36,7 +36,8 @@ static event_queue_t *q;
 static pthread_t tid;
 static sem_t idle_sem;
 static sem_t done;
-static sem_t wake;
+static pthread_cond_t sleep_cv;
+static pthread_mutex_t sleep_mx;
 
 static void wait_wake(void)
 {
@@ -45,7 +46,10 @@ static void wait_wake(void)
         .tv_sec  = in_one_ms / NANOSECONDS_PER_SECOND,
         .tv_nsec = in_one_ms % NANOSECONDS_PER_SECOND
     };
-    sem_timedwait(&wake, &soon);
+
+    pthread_mutex_lock(&sleep_mx);
+    pthread_cond_timedwait(&sleep_cv, &sleep_mx, &soon);
+    pthread_mutex_unlock(&sleep_mx);
 }
 
 /* The plan:
@@ -147,7 +151,14 @@ EXPORT_SYMBOL void SRT_send_message(const void *msg,
         ERROR_MSG("Failed to enqueue message.");
         exit(-2);
     }
-    sem_post(&wake);
+#if 0 // Helgrind claims that I'm doing something wrong here, and
+      // signalling isn't strictly necessary for this stuff to work;
+      // it's just a performance optimization. So until we figure out
+      // what's wrong, I'm leaving this code disabled.
+    pthread_mutex_lock(&sleep_mx);
+    pthread_cond_signal(&sleep_cv);
+    pthread_mutex_unlock(&sleep_mx);
+#endif
 }
 
 EXPORT_SYMBOL cancel_token_t SRT_send_later(const void *msg,
@@ -185,7 +196,8 @@ EXPORT_SYMBOL void SRT_init(void)
     q = eq_new();
     sem_init(&idle_sem, 0, 0);
     sem_init(&done, 0, 0);
-    sem_init(&wake, 0, 0);
+    pthread_mutex_init(&sleep_mx, NULL);
+    pthread_cond_init(&sleep_cv, NULL);
 }
 
 EXPORT_SYMBOL void SRT_run(void)
@@ -230,5 +242,6 @@ EXPORT_SYMBOL void SRT_stop(void)
     eq_free(q);
     sem_destroy(&idle_sem);
     sem_destroy(&done);
-    sem_destroy(&wake);
+    pthread_mutex_destroy(&sleep_mx);
+    pthread_cond_destroy(&sleep_cv);
 }
