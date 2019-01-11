@@ -6,6 +6,7 @@
 #include <semaphore.h>
 #include <time.h>
 #include "smeartime.h"
+#include "thread-utils.h"
 #include "cancellable.h"
 #include "smear/smear.h"
 
@@ -22,7 +23,6 @@ EXPORT_SYMBOL const char *SRT_get_version(void)
 }
 
 #define NS_PER_MS 1000000
-#define NANOSECONDS_PER_SECOND 1000000000
 
 typedef void (*handler_t)(const void *);
 
@@ -36,21 +36,7 @@ static event_queue_t *q;
 static pthread_t tid;
 static sem_t idle_sem;
 static sem_t done;
-static pthread_cond_t sleep_cv;
-static pthread_mutex_t sleep_mx;
-
-static void wait_wake(void)
-{
-    abs_time_t in_one_ms = time_add(get_now_real_ns(), NS_PER_MS);
-    struct timespec soon = {
-        .tv_sec  = in_one_ms / NANOSECONDS_PER_SECOND,
-        .tv_nsec = in_one_ms % NANOSECONDS_PER_SECOND
-    };
-
-    pthread_mutex_lock(&sleep_mx);
-    pthread_cond_timedwait(&sleep_cv, &sleep_mx, &soon);
-    pthread_mutex_unlock(&sleep_mx);
-}
+static wait_data_t *sleep_data;
 
 /* The plan:
  *
@@ -84,7 +70,7 @@ static void *mainloop(void *unused)
         sem_post(&idle_sem);
         if (sem_trywait(&done) == 0)
             return NULL;
-        wait_wake();
+        smear_sleep(sleep_data);
         sem_wait(&idle_sem);
     }
     return NULL;
@@ -155,9 +141,7 @@ EXPORT_SYMBOL void SRT_send_message(const void *msg,
       // signalling isn't strictly necessary for this stuff to work;
       // it's just a performance optimization. So until we figure out
       // what's wrong, I'm leaving this code disabled.
-    pthread_mutex_lock(&sleep_mx);
-    pthread_cond_signal(&sleep_cv);
-    pthread_mutex_unlock(&sleep_mx);
+    smear_wake(sleep_data);
 #endif
 }
 
@@ -196,8 +180,7 @@ EXPORT_SYMBOL void SRT_init(void)
     q = eq_new();
     sem_init(&idle_sem, 0, 0);
     sem_init(&done, 0, 0);
-    pthread_mutex_init(&sleep_mx, NULL);
-    pthread_cond_init(&sleep_cv, NULL);
+    sleep_data = wait_data_new();
 }
 
 EXPORT_SYMBOL void SRT_run(void)
@@ -242,6 +225,6 @@ EXPORT_SYMBOL void SRT_stop(void)
     eq_free(q);
     sem_destroy(&idle_sem);
     sem_destroy(&done);
-    pthread_mutex_destroy(&sleep_mx);
-    pthread_cond_destroy(&sleep_cv);
+    wait_data_free(sleep_data);
+    sleep_data = NULL;
 }
