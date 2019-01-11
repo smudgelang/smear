@@ -30,7 +30,7 @@ void smear_wake(wait_data_t *data)
 {
     pthread_mutex_lock(&data->mx);
     pthread_cond_signal(&data->cv);
-    pthread_mutex_unlock(&data_mx);
+    pthread_mutex_unlock(&data->mx);
 }
 
 wait_data_t *wait_data_new(void)
@@ -41,14 +41,13 @@ wait_data_t *wait_data_new(void)
         return NULL;
     pthread_cond_init(&data->cv, NULL);
     pthread_mutex_init(&data->mx, NULL);
+    return data;
 }
 
 void wait_data_free(wait_data_t *data)
 {
     pthread_cond_destroy(&data->cv);
-    data->cv = NULL;
     pthread_mutex_destroy(&data->mx);
-    data->mx = NULL;
     free(data);
     data = NULL;
 }
