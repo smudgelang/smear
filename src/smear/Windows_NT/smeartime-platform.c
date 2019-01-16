@@ -30,7 +30,7 @@ abs_time_t get_now_ns(void)
 
 abs_time_t get_now_real_ns(void)
 {
-    // Per MSDN, "Contains a 74-bit value representing the number of
+    // Per MSDN, "Contains a 64-bit value representing the number of
     // 100-nanosecond intervals since January 1, 1601 (UTC)."
     FILETIME now;
     GetSystemTimePreciseAsFileTime(&now);
