@@ -200,7 +200,7 @@ static heap_data_t *heap_peek(heap_t *heap, abs_time_t time)
         return NULL;
 
     next = &heap->data[1];
-    if (next->delivery_time > time)
+    if (time_compare(next->delivery_time, time) > 0)
         return NULL;
 
     return next;

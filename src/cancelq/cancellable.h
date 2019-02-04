@@ -4,6 +4,7 @@
 #include <stddef.h>
 #include <stdbool.h>
 #include <stdint.h>
+#include "smeartime.h"
 
 #define NOT_CANCELLABLE ((cancellable_id_t)-1)
 #define SCHEDULE_FAIL ((cancellable_id_t)-2)
@@ -13,9 +14,6 @@ typedef struct event_queue_s event_queue_t;
 
 // ID used to cancel cancellable_t
 typedef int cancellable_id_t;
-
-// Absolute time taken by schedule, post, and next.
-typedef uint64_t abs_time_t;
 
 // Return a new event queue that will schedule and deliver events with
 // the eq functions below.

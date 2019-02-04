@@ -63,6 +63,7 @@ debug:
 	@echo vpath $(VPATH)
 	@echo target cpu $(TARGET_CPU)
 	@echo target platform $(TARGET_PLATFORM)
+	@echo smear-archdir src/smear/$(ARCH)/
 
 all: libsmear.a libsmear.dmp tests obj/libsmear.a
 

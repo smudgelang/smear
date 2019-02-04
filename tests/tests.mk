@@ -19,11 +19,12 @@ HELGRIND_TESTS =  \
         test-cancelq-cancel-some-drain-some test-cancelq-not-cancellable \
         test-cancelq-threads test-number test-smear-delayedwaits
 
-test-cancelq-%: test-cancelq-%.c obj/cancellable.o
+test-cancelq-%: test-cancelq-%.c obj/cancellable.o obj/smeartime.o
 	$(CC) $(CFLAGS) $(INCLUDE) -o $@ $^ $(LIBS)
 
 test-queue: test-queue.c obj/queue.o
 	$(CC) $(CFLAGS) $(INCLUDE) -o $@ $^
+
 test-smear-%.o: test-smear-%.c
 	$(CC) $(CFLAGS) $(INCLUDE) -c -o $@ $<
 

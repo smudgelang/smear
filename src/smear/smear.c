@@ -4,7 +4,9 @@
 #include <unistd.h>
 #include <pthread.h>
 #include <semaphore.h>
+#include <time.h>
 #include "smeartime.h"
+#include "thread-utils.h"
 #include "cancellable.h"
 #include "smear/smear.h"
 
@@ -34,6 +36,7 @@ static event_queue_t *q;
 static pthread_t tid;
 static sem_t idle_sem;
 static sem_t done;
+static wait_data_t *sleep_data;
 
 /* The plan:
  *
@@ -67,6 +70,7 @@ static void *mainloop(void *unused)
         sem_post(&idle_sem);
         if (sem_trywait(&done) == 0)
             return NULL;
+        smear_sleep(sleep_data);
         sem_wait(&idle_sem);
     }
     return NULL;
@@ -133,6 +137,12 @@ EXPORT_SYMBOL void SRT_send_message(const void *msg,
         ERROR_MSG("Failed to enqueue message.");
         exit(-2);
     }
+#if 0 // Helgrind claims that I'm doing something wrong here, and
+      // signalling isn't strictly necessary for this stuff to work;
+      // it's just a performance optimization. So until we figure out
+      // what's wrong, I'm leaving this code disabled.
+    smear_wake(sleep_data);
+#endif
 }
 
 EXPORT_SYMBOL cancel_token_t SRT_send_later(const void *msg,
@@ -170,6 +180,7 @@ EXPORT_SYMBOL void SRT_init(void)
     q = eq_new();
     sem_init(&idle_sem, 0, 0);
     sem_init(&done, 0, 0);
+    sleep_data = wait_data_new();
 }
 
 EXPORT_SYMBOL void SRT_run(void)
@@ -214,4 +225,6 @@ EXPORT_SYMBOL void SRT_stop(void)
     eq_free(q);
     sem_destroy(&idle_sem);
     sem_destroy(&done);
+    wait_data_free(sleep_data);
+    sleep_data = NULL;
 }
